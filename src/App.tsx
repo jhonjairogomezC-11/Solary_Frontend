@@ -54,6 +54,9 @@ const NotificacionesPage = lazy(() =>
 const CompletarPerfilPage = lazy(() =>
   import('@/pages/app/CompletarPerfilPage').then((m) => ({ default: m.CompletarPerfilPage })),
 )
+const FavoritosPage = lazy(() =>
+  import('@/pages/app/FavoritosPage').then((m) => ({ default: m.FavoritosPage })),
+)
 
 function SuspenseFallback() {
   return (
@@ -93,6 +96,7 @@ export default function App() {
                 <Route path="convocatorias/:id/postulaciones" element={<PostulacionesPage />} />
                 <Route path="mis-convocatorias" element={<MisConvocatoriasPage />} />
                 <Route path="mis-postulaciones" element={<MisPostulacionesPage />} />
+                <Route path="favoritos" element={<FavoritosPage />} />
                 <Route path="notificaciones" element={<NotificacionesPage />} />
               </Route>
             </Route>

@@ -4,6 +4,7 @@ import { CalendarDays, MapPin, Users } from 'lucide-react'
 
 import { Badge } from '@/components/ui/Badge'
 import { modalidadBadge } from '@/components/ui/badgeHelpers'
+import { FavoritoButton } from '@/components/convocatorias/FavoritoButton'
 import { formatDate } from '@/lib/utils'
 import type { Convocatoria } from '@/types/convocatoria'
 
@@ -34,6 +35,9 @@ export function ConvocatoriaCard({ convocatoria, index = 0 }: { convocatoria: Co
           )}
           <div className="absolute left-3 top-3">
             <Badge tone={mod.tone}>{mod.label}</Badge>
+          </div>
+          <div className="absolute right-3 top-3">
+            <FavoritoButton convocatoriaId={convocatoria.id} size="sm" />
           </div>
         </div>
 

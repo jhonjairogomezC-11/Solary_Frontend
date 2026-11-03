@@ -7,6 +7,7 @@ import {
   HeartHandshake,
   LayoutDashboard,
   LogOut,
+  Heart,
   Megaphone,
   Menu,
   UserCog,
@@ -16,6 +17,7 @@ import {
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/auth/AuthContext'
+import { FavoritosProvider } from '@/hooks/useFavoritos'
 import { convocatoriaService } from '@/services/convocatoriaService'
 import { cn } from '@/lib/utils'
 
@@ -64,6 +66,7 @@ export function AppLayout() {
         { to: '/app', label: 'Panel', icon: LayoutDashboard, end: true },
         { to: '/app/convocatorias', label: 'Explorar', icon: Compass },
         { to: '/app/mis-postulaciones', label: 'Mis postulaciones', icon: HeartHandshake },
+        { to: '/app/favoritos', label: 'Favoritos', icon: Heart },
         { to: '/app/notificaciones', label: 'Notificaciones', icon: Bell },
         { to: '/app/perfil', label: 'Mi perfil', icon: UserCog },
       ]
@@ -136,6 +139,7 @@ export function AppLayout() {
   )
 
   return (
+    <FavoritosProvider>
     <div className="flex min-h-screen bg-solar-50 dark:bg-ink-950">
       {/* Sidebar desktop */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-ink-200/60 bg-white/70 backdrop-blur lg:flex dark:border-ink-800 dark:bg-ink-950/60">
@@ -182,5 +186,6 @@ export function AppLayout() {
         </main>
       </div>
     </div>
+    </FavoritosProvider>
   )
 }

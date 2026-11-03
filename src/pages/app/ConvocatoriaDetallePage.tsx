@@ -16,6 +16,7 @@ import { Alert } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
 import { modalidadBadge } from '@/components/ui/badgeHelpers'
 import { Button } from '@/components/ui/Button'
+import { FavoritoButton } from '@/components/convocatorias/FavoritoButton'
 import { useAuth } from '@/auth/AuthContext'
 import { parseApiError } from '@/lib/apiClient'
 import { formatDate, formatTime } from '@/lib/utils'
@@ -106,6 +107,11 @@ export function ConvocatoriaDetallePage() {
           <div className="absolute left-4 top-4">
             <Badge tone={mod.tone}>{mod.label}</Badge>
           </div>
+          {esVoluntario && (
+            <div className="absolute right-4 top-4">
+              <FavoritoButton convocatoriaId={conv.id} />
+            </div>
+          )}
         </div>
 
         <div className="p-6 sm:p-8">

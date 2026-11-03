@@ -179,4 +179,24 @@ export const convocatoriaService = {
     const { data } = await api.put('/perfil/fundacion', payload)
     return data
   },
+
+  // ─── Favoritos ───
+  async favoritosIds(): Promise<string[]> {
+    const { data } = await api.get<string[]>('/favoritos/ids')
+    return data
+  },
+
+  async toggleFavorito(publicacion_id: string): Promise<boolean> {
+    const { data } = await api.post<{ favorito: boolean }>(
+      `/favoritos/convocatoria/${publicacion_id}`,
+    )
+    return data.favorito
+  },
+
+  async favoritosConvocatorias(): Promise<{ id: string; fecha_creacion: string; convocatoria: Convocatoria }[]> {
+    const { data } = await api.get<
+      { id: string; fecha_creacion: string; convocatoria: Convocatoria }[]
+    >('/favoritos/convocatorias')
+    return data
+  },
 }
