@@ -144,4 +144,39 @@ export const convocatoriaService = {
   async marcarTodasLeidas(): Promise<void> {
     await api.post('/notificaciones/marcar-todas-leidas')
   },
+
+  // ─── Perfil ───
+  async estadoPerfil(): Promise<{ rol: string; perfil_completo: boolean }> {
+    const { data } = await api.get<{ rol: string; perfil_completo: boolean }>('/perfil/estado')
+    return data
+  },
+
+  async guardarPerfilVoluntario(payload: {
+    tipo_documento: string
+    numero_documento: string
+    fecha_nacimiento: string
+    genero: string
+    municipio_id: number
+    disponibilidad: string
+    experiencia?: string
+  }): Promise<unknown> {
+    const { data } = await api.put('/perfil/voluntario', payload)
+    return data
+  },
+
+  async guardarPerfilFundacion(payload: {
+    nombre_fundacion: string
+    nit: string
+    representante_legal: string
+    correo_institucional?: string
+    telefono_contacto: string
+    direccion: string
+    municipio_id: number
+    descripcion: string
+    documento_legal: string
+    pagina_web?: string
+  }): Promise<unknown> {
+    const { data } = await api.put('/perfil/fundacion', payload)
+    return data
+  },
 }

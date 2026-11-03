@@ -51,6 +51,9 @@ const MisPostulacionesPage = lazy(() =>
 const NotificacionesPage = lazy(() =>
   import('@/pages/app/NotificacionesPage').then((m) => ({ default: m.NotificacionesPage })),
 )
+const CompletarPerfilPage = lazy(() =>
+  import('@/pages/app/CompletarPerfilPage').then((m) => ({ default: m.CompletarPerfilPage })),
+)
 
 function SuspenseFallback() {
   return (
@@ -83,6 +86,7 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/app" element={<AppLayout />}>
                 <Route index element={<DashboardHome />} />
+                <Route path="perfil" element={<CompletarPerfilPage />} />
                 <Route path="convocatorias" element={<ExplorarPage />} />
                 <Route path="convocatorias/nueva" element={<CrearConvocatoriaPage />} />
                 <Route path="convocatorias/:id" element={<ConvocatoriaDetallePage />} />

@@ -9,6 +9,7 @@ import {
   LogOut,
   Megaphone,
   Menu,
+  UserCog,
   X,
 } from 'lucide-react'
 
@@ -57,12 +58,14 @@ export function AppLayout() {
         { to: '/app/mis-convocatorias', label: 'Mis convocatorias', icon: Megaphone },
         { to: '/app/convocatorias', label: 'Explorar', icon: Compass },
         { to: '/app/notificaciones', label: 'Notificaciones', icon: Bell },
+        { to: '/app/perfil', label: 'Mi perfil', icon: UserCog },
       ]
     : [
         { to: '/app', label: 'Panel', icon: LayoutDashboard, end: true },
         { to: '/app/convocatorias', label: 'Explorar', icon: Compass },
         { to: '/app/mis-postulaciones', label: 'Mis postulaciones', icon: HeartHandshake },
         { to: '/app/notificaciones', label: 'Notificaciones', icon: Bell },
+        { to: '/app/perfil', label: 'Mi perfil', icon: UserCog },
       ]
 
   const handleLogout = async () => {

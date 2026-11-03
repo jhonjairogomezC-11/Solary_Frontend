@@ -196,7 +196,18 @@ export function ConvocatoriaDetallePage() {
                   <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white">
                     Postularme
                   </h2>
-                  {postError && <Alert tone="error" className="mt-3">{postError}</Alert>}
+                  {postError && (
+                    <div className="mt-3">
+                      <Alert tone={postError.includes('perfil') ? 'info' : 'error'}>
+                        {postError}
+                      </Alert>
+                      {postError.includes('perfil') && (
+                        <Button className="mt-3" onClick={() => navigate('/app/perfil')}>
+                          Completar mi perfil
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   <textarea
                     rows={3}
                     value={mensaje}

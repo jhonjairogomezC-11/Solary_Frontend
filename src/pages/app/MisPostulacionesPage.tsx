@@ -88,13 +88,22 @@ export function MisPostulacionesPage() {
         Haz seguimiento al estado de tus solicitudes.
       </p>
 
-      {error && <Alert tone="error" className="mt-4">{error}</Alert>}
+      {error && (
+        <div className="mt-4">
+          <Alert tone={error.includes('perfil') ? 'info' : 'error'}>{error}</Alert>
+          {error.includes('perfil') && (
+            <Link to="/app/perfil" className="mt-3 inline-block">
+              <Button>Completar mi perfil</Button>
+            </Link>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="size-8 animate-spin text-solar-500" />
         </div>
-      ) : items.length === 0 ? (
+      ) : error ? null : items.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-ink-300 py-16 text-center dark:border-ink-700">
           <HeartHandshake className="mx-auto size-10 text-ink-300" />
           <p className="mt-3 text-ink-500 dark:text-ink-400">Aún no te has postulado a ninguna convocatoria.</p>

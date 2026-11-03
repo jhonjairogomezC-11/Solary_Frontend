@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Bell, Compass, HeartHandshake, Megaphone, Plus } from 'lucide-react'
+import { ArrowRight, Bell, Compass, HeartHandshake, Megaphone, Plus, UserCog } from 'lucide-react'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -13,9 +13,14 @@ export function DashboardHome() {
   const esFundacion = usuario?.rol === 'FUNDACION'
   const primerNombre = usuario?.nombre.split(' ')[0] ?? ''
   const [noLeidas, setNoLeidas] = useState(0)
+  const [perfilCompleto, setPerfilCompleto] = useState(true)
 
   useEffect(() => {
     convocatoriaService.noLeidas().then(setNoLeidas).catch(() => {})
+    convocatoriaService
+      .estadoPerfil()
+      .then((e) => setPerfilCompleto(e.perfil_completo))
+      .catch(() => {})
   }, [])
 
   const accionesFundacion = [
@@ -46,6 +51,28 @@ export function DashboardHome() {
         </div>
         <Badge tone={esFundacion ? 'blue' : 'solar'}>{esFundacion ? 'Fundación' : 'Voluntario'}</Badge>
       </motion.div>
+
+      {!perfilCompleto && (
+        <Link
+          to="/app/perfil"
+          className="mt-6 flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 transition hover:shadow-soft dark:border-amber-500/40 dark:bg-amber-500/10"
+        >
+          <span className="flex size-10 items-center justify-center rounded-xl bg-amber-400 text-white">
+            <UserCog className="size-5" />
+          </span>
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800 dark:text-amber-200">
+              Completa tu perfil para continuar
+            </p>
+            <p className="text-sm text-amber-700/80 dark:text-amber-300/80">
+              {esFundacion
+                ? 'Necesitas los datos de tu fundación para publicar convocatorias.'
+                : 'Necesitas tu perfil para postularte a convocatorias.'}
+            </p>
+          </div>
+          <ArrowRight className="size-5 text-amber-500" />
+        </Link>
+      )}
 
       {!usuario?.email_verificado && (
         <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
