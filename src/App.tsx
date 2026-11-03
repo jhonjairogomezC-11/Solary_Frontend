@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '@/auth/AuthContext'
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/routing/RouteGuards'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { Logo } from '@/components/ui/Logo'
 
 const LandingPage = lazy(() =>
@@ -21,11 +22,34 @@ const ResetPasswordPage = lazy(() =>
 const VerifyEmailPage = lazy(() =>
   import('@/pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })),
 )
-const DashboardPage = lazy(() =>
-  import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
-)
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+)
+
+// App (protegida)
+const DashboardHome = lazy(() =>
+  import('@/pages/app/DashboardHome').then((m) => ({ default: m.DashboardHome })),
+)
+const ExplorarPage = lazy(() =>
+  import('@/pages/app/ExplorarPage').then((m) => ({ default: m.ExplorarPage })),
+)
+const ConvocatoriaDetallePage = lazy(() =>
+  import('@/pages/app/ConvocatoriaDetallePage').then((m) => ({ default: m.ConvocatoriaDetallePage })),
+)
+const CrearConvocatoriaPage = lazy(() =>
+  import('@/pages/app/CrearConvocatoriaPage').then((m) => ({ default: m.CrearConvocatoriaPage })),
+)
+const MisConvocatoriasPage = lazy(() =>
+  import('@/pages/app/MisConvocatoriasPage').then((m) => ({ default: m.MisConvocatoriasPage })),
+)
+const PostulacionesPage = lazy(() =>
+  import('@/pages/app/PostulacionesPage').then((m) => ({ default: m.PostulacionesPage })),
+)
+const MisPostulacionesPage = lazy(() =>
+  import('@/pages/app/MisPostulacionesPage').then((m) => ({ default: m.MisPostulacionesPage })),
+)
+const NotificacionesPage = lazy(() =>
+  import('@/pages/app/NotificacionesPage').then((m) => ({ default: m.NotificacionesPage })),
 )
 
 function SuspenseFallback() {
@@ -55,9 +79,18 @@ export default function App() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
             </Route>
 
-            {/* Rutas protegidas */}
+            {/* App protegida con layout */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/app" element={<DashboardPage />} />
+              <Route path="/app" element={<AppLayout />}>
+                <Route index element={<DashboardHome />} />
+                <Route path="convocatorias" element={<ExplorarPage />} />
+                <Route path="convocatorias/nueva" element={<CrearConvocatoriaPage />} />
+                <Route path="convocatorias/:id" element={<ConvocatoriaDetallePage />} />
+                <Route path="convocatorias/:id/postulaciones" element={<PostulacionesPage />} />
+                <Route path="mis-convocatorias" element={<MisConvocatoriasPage />} />
+                <Route path="mis-postulaciones" element={<MisPostulacionesPage />} />
+                <Route path="notificaciones" element={<NotificacionesPage />} />
+              </Route>
             </Route>
 
             <Route path="/404" element={<NotFoundPage />} />
