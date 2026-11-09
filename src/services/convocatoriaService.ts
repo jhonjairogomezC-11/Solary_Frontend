@@ -8,6 +8,8 @@ import type {
   Municipio,
   Notificacion,
   Paginated,
+  PerfilFundacion,
+  PerfilVoluntario,
   Postulacion,
 } from '@/types/convocatoria'
 
@@ -178,6 +180,45 @@ export const convocatoriaService = {
   }): Promise<unknown> {
     const { data } = await api.put('/perfil/fundacion', payload)
     return data
+  },
+
+  async miPerfilVoluntario(): Promise<PerfilVoluntario | null> {
+    try {
+      const { data } = await api.get<PerfilVoluntario>('/perfil/voluntario')
+      return data
+    } catch {
+      return null
+    }
+  },
+
+  async miPerfilFundacion(): Promise<PerfilFundacion | null> {
+    try {
+      const { data } = await api.get<PerfilFundacion>('/perfil/fundacion')
+      return data
+    } catch {
+      return null
+    }
+  },
+
+  async subirFotoVoluntario(file: File): Promise<string> {
+    const form = new FormData()
+    form.append('archivo', file)
+    const { data } = await api.post<{ url: string }>('/perfil/voluntario/foto', form)
+    return data.url
+  },
+
+  async subirDocumentoVoluntario(file: File): Promise<string> {
+    const form = new FormData()
+    form.append('archivo', file)
+    const { data } = await api.post<{ url: string }>('/perfil/voluntario/documento', form)
+    return data.url
+  },
+
+  async subirLogoFundacion(file: File): Promise<string> {
+    const form = new FormData()
+    form.append('archivo', file)
+    const { data } = await api.post<{ url: string }>('/perfil/fundacion/logo', form)
+    return data.url
   },
 
   // ─── Favoritos ───

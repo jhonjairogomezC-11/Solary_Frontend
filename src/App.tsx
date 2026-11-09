@@ -79,6 +79,11 @@ const AdminPostulacionesPage = lazy(() =>
     default: m.AdminPostulacionesPage,
   })),
 )
+const AdminVoluntariosPage = lazy(() =>
+  import('@/pages/admin/AdminVoluntariosPage').then((m) => ({
+    default: m.AdminVoluntariosPage,
+  })),
+)
 const AdminCatalogosPage = lazy(() =>
   import('@/pages/admin/AdminCatalogosPage').then((m) => ({ default: m.AdminCatalogosPage })),
 )
@@ -131,6 +136,7 @@ export default function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboardPage />} />
                 <Route path="usuarios" element={<AdminUsuariosPage />} />
+                <Route path="voluntarios" element={<AdminVoluntariosPage />} />
                 <Route path="fundaciones" element={<AdminFundacionesPage />} />
                 <Route path="convocatorias" element={<AdminConvocatoriasPage />} />
                 <Route path="postulaciones" element={<AdminPostulacionesPage />} />

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
+  BadgeCheck,
   Building2,
   CalendarCheck,
   LayoutDashboard,
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
+  { to: '/admin/voluntarios', label: 'Verificar voluntarios', icon: BadgeCheck },
   { to: '/admin/fundaciones', label: 'Fundaciones', icon: Building2 },
   { to: '/admin/convocatorias', label: 'Convocatorias', icon: Megaphone },
   { to: '/admin/postulaciones', label: 'Postulaciones', icon: CalendarCheck },

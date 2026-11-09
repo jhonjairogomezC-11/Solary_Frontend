@@ -4,6 +4,7 @@ import type {
   AdminFundacion,
   AdminPostulacion,
   AdminUsuario,
+  AdminVoluntario,
   DashboardStats,
   PaginatedAdmin,
 } from '@/types/admin'
@@ -116,6 +117,29 @@ export const adminService = {
   ): Promise<PaginatedAdmin<AdminPostulacion>> {
     const { data } = await api.get<PaginatedAdmin<AdminPostulacion>>('/admin/postulaciones', {
       params: { page, ...(estado ? { estado } : {}) },
+    })
+    return data
+  },
+
+  // ─── Voluntarios (verificación) ───
+  async voluntarios(
+    filtros: {
+      verificado?: boolean
+      con_documento?: boolean
+      buscar?: string
+      page?: number
+      per_page?: number
+    } = {},
+  ): Promise<PaginatedAdmin<AdminVoluntario>> {
+    const { data } = await api.get<PaginatedAdmin<AdminVoluntario>>('/admin/voluntarios', {
+      params: filtros,
+    })
+    return data
+  },
+
+  async verificarVoluntario(id: string, verificado: boolean): Promise<AdminVoluntario> {
+    const { data } = await api.patch<AdminVoluntario>(`/admin/voluntarios/${id}/verificacion`, {
+      verificado,
     })
     return data
   },

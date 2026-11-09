@@ -94,6 +94,19 @@ export interface AdminPostulacion {
   voluntario_nombre: string | null
 }
 
+export interface AdminVoluntario {
+  id: string
+  usuario_id: string
+  nombre: string | null
+  email: string | null
+  tipo_documento: string
+  numero_documento: string
+  foto_perfil: string | null
+  documento_identidad: string | null
+  esta_verificado: boolean
+  fecha_creacion: string
+}
+
 export interface PaginatedAdmin<T> {
   data: T[]
   total: number

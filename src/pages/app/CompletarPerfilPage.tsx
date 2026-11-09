@@ -1,6 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle2, UserCog } from 'lucide-react'
+import {
+  BadgeCheck,
+  Camera,
+  CheckCircle2,
+  Clock,
+  FileText,
+  ShieldCheck,
+  Upload,
+  UserCog,
+} from 'lucide-react'
 
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
@@ -9,7 +18,7 @@ import { Select } from '@/components/ui/Select'
 import { useAuth } from '@/auth/AuthContext'
 import { parseApiError } from '@/lib/apiClient'
 import { convocatoriaService } from '@/services/convocatoriaService'
-import type { Municipio } from '@/types/convocatoria'
+import type { Municipio, PerfilFundacion, PerfilVoluntario } from '@/types/convocatoria'
 
 const TIPO_DOC = [
   { value: 'CC', label: 'Cédula de ciudadanía' },
@@ -35,7 +44,13 @@ export function CompletarPerfilPage() {
 
   const [municipios, setMunicipios] = useState<Municipio[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [ok, setOk] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const [perfilVol, setPerfilVol] = useState<PerfilVoluntario | null>(null)
+  const [perfilFund, setPerfilFund] = useState<PerfilFundacion | null>(null)
+  const yaCompleto = esFundacion ? !!perfilFund : !!perfilVol
 
   const [vol, setVol] = useState({
     tipo_documento: '',
@@ -60,15 +75,60 @@ export function CompletarPerfilPage() {
   })
 
   useEffect(() => {
-    convocatoriaService.municipios().then(setMunicipios).catch(() => {})
-  }, [])
+    let active = true
+    async function cargar() {
+      try {
+        const [muni, pv, pf] = await Promise.all([
+          convocatoriaService.municipios(),
+          esFundacion ? Promise.resolve(null) : convocatoriaService.miPerfilVoluntario(),
+          esFundacion ? convocatoriaService.miPerfilFundacion() : Promise.resolve(null),
+        ])
+        if (!active) return
+        setMunicipios(muni)
+        if (pv) {
+          setPerfilVol(pv)
+          setVol({
+            tipo_documento: pv.tipo_documento,
+            numero_documento: pv.numero_documento,
+            fecha_nacimiento: pv.fecha_nacimiento,
+            genero: pv.genero,
+            municipio_id: String(pv.municipio_id),
+            disponibilidad: pv.disponibilidad,
+            experiencia: pv.experiencia ?? '',
+          })
+        }
+        if (pf) {
+          setPerfilFund(pf)
+          setFund({
+            nombre_fundacion: pf.nombre,
+            nit: pf.nit,
+            representante_legal: pf.representante_legal,
+            correo_institucional: pf.correo_institucional ?? '',
+            telefono_contacto: pf.telefono,
+            direccion: pf.direccion,
+            municipio_id: String(pf.municipio_id),
+            descripcion: pf.descripcion,
+            documento_legal: pf.documento_legal ?? '',
+            pagina_web: pf.pagina_web ?? '',
+          })
+        }
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void cargar()
+    return () => {
+      active = false
+    }
+  }, [esFundacion])
 
   const guardar = async () => {
     setError(null)
+    setOk(null)
     setSaving(true)
     try {
       if (esFundacion) {
-        await convocatoriaService.guardarPerfilFundacion({
+        const pf = await convocatoriaService.guardarPerfilFundacion({
           nombre_fundacion: fund.nombre_fundacion,
           nit: fund.nit,
           representante_legal: fund.representante_legal,
@@ -80,8 +140,9 @@ export function CompletarPerfilPage() {
           documento_legal: fund.documento_legal,
           pagina_web: fund.pagina_web || undefined,
         })
+        setPerfilFund(pf as PerfilFundacion)
       } else {
-        await convocatoriaService.guardarPerfilVoluntario({
+        const pv = await convocatoriaService.guardarPerfilVoluntario({
           tipo_documento: vol.tipo_documento,
           numero_documento: vol.numero_documento,
           fecha_nacimiento: vol.fecha_nacimiento,
@@ -90,9 +151,14 @@ export function CompletarPerfilPage() {
           disponibilidad: vol.disponibilidad,
           experiencia: vol.experiencia || undefined,
         })
+        setPerfilVol(pv as PerfilVoluntario)
       }
       await refreshUsuario()
-      navigate('/app', { replace: true })
+      if (!yaCompleto) {
+        navigate('/app', { replace: true })
+      } else {
+        setOk('Perfil actualizado correctamente.')
+      }
     } catch (err) {
       setError(parseApiError(err).message)
     } finally {
@@ -102,6 +168,15 @@ export function CompletarPerfilPage() {
 
   const muniOpts = municipios.map((m) => ({ value: m.id, label: m.nombre }))
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-4">
+        <div className="h-24 animate-pulse rounded-2xl bg-ink-100 dark:bg-ink-800" />
+        <div className="h-96 animate-pulse rounded-2xl bg-ink-100 dark:bg-ink-800" />
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center gap-3">
@@ -110,20 +185,39 @@ export function CompletarPerfilPage() {
         </span>
         <div>
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900 dark:text-white">
-            Completa tu perfil
+            {yaCompleto ? 'Mi perfil' : 'Completa tu perfil'}
           </h1>
           <p className="text-sm text-ink-500 dark:text-ink-400">
-            {esFundacion
-              ? 'Necesitamos algunos datos de tu fundación para activar todas las funciones.'
-              : 'Necesitamos algunos datos tuyos para que puedas postularte a convocatorias.'}
+            {yaCompleto
+              ? 'Edita tu información y gestiona tu verificación.'
+              : esFundacion
+                ? 'Necesitamos algunos datos de tu fundación para activar todas las funciones.'
+                : 'Necesitamos algunos datos tuyos para que puedas postularte a convocatorias.'}
           </p>
         </div>
       </div>
 
-      <Alert tone="info" className="mb-6">
-        Este paso es necesario porque tu cuenta aún no tiene el perfil completo (por ejemplo, si te
-        registraste con Google).
-      </Alert>
+      {/* Sección de foto + verificación (solo voluntario con perfil) */}
+      {!esFundacion && perfilVol && (
+        <VerificacionVoluntario
+          perfil={perfilVol}
+          onActualizar={(p) => setPerfilVol(p)}
+          onError={setError}
+        />
+      )}
+
+      {!yaCompleto && (
+        <Alert tone="info" className="mb-6">
+          Este paso es necesario porque tu cuenta aún no tiene el perfil completo (por ejemplo, si
+          te registraste con Google).
+        </Alert>
+      )}
+
+      {ok && (
+        <Alert tone="success" className="mb-4">
+          {ok}
+        </Alert>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -190,9 +284,147 @@ export function CompletarPerfilPage() {
         )}
 
         <Button type="submit" size="lg" fullWidth loading={saving}>
-          <CheckCircle2 className="size-4" /> Guardar perfil
+          <CheckCircle2 className="size-4" /> {yaCompleto ? 'Guardar cambios' : 'Guardar perfil'}
         </Button>
       </form>
+    </div>
+  )
+}
+
+/** Tarjeta de foto de perfil + verificación de documento (estilo redes sociales). */
+function VerificacionVoluntario({
+  perfil,
+  onActualizar,
+  onError,
+}: {
+  perfil: PerfilVoluntario
+  onActualizar: (p: PerfilVoluntario) => void
+  onError: (m: string) => void
+}) {
+  const fotoRef = useRef<HTMLInputElement>(null)
+  const docRef = useRef<HTMLInputElement>(null)
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [subiendoDoc, setSubiendoDoc] = useState(false)
+
+  const subirFoto = async (file: File) => {
+    setSubiendoFoto(true)
+    onError('')
+    try {
+      const url = await convocatoriaService.subirFotoVoluntario(file)
+      onActualizar({ ...perfil, foto_perfil: url })
+    } catch (err) {
+      onError(parseApiError(err).message)
+    } finally {
+      setSubiendoFoto(false)
+    }
+  }
+
+  const subirDoc = async (file: File) => {
+    setSubiendoDoc(true)
+    onError('')
+    try {
+      const url = await convocatoriaService.subirDocumentoVoluntario(file)
+      onActualizar({ ...perfil, documento_identidad: url, esta_verificado: false })
+    } catch (err) {
+      onError(parseApiError(err).message)
+    } finally {
+      setSubiendoDoc(false)
+    }
+  }
+
+  return (
+    <div className="mb-6 rounded-2xl border border-ink-200/60 bg-white/70 p-6 backdrop-blur dark:border-ink-700/60 dark:bg-ink-900/50">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+        {/* Foto */}
+        <div className="relative">
+          <div className="flex size-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-solar-200 to-solar-400 text-white">
+            {perfil.foto_perfil ? (
+              <img src={perfil.foto_perfil} alt="Foto de perfil" className="size-full object-cover" />
+            ) : (
+              <UserCog className="size-10" />
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => fotoRef.current?.click()}
+            disabled={subiendoFoto}
+            className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-solar-500 text-white shadow-md hover:bg-solar-600 disabled:opacity-50"
+            title="Cambiar foto"
+          >
+            <Camera className="size-4" />
+          </button>
+          <input
+            ref={fotoRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => e.target.files?.[0] && subirFoto(e.target.files[0])}
+          />
+        </div>
+
+        {/* Estado de verificación */}
+        <div className="flex-1 text-center sm:text-left">
+          <div className="flex items-center justify-center gap-2 sm:justify-start">
+            <h3 className="font-semibold text-ink-900 dark:text-white">Verificación de identidad</h3>
+            {perfil.esta_verificado ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                <BadgeCheck className="size-3.5" /> Verificado
+              </span>
+            ) : perfil.documento_identidad ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                <Clock className="size-3.5" /> En revisión
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-ink-200 px-2 py-0.5 text-xs font-semibold text-ink-600 dark:bg-ink-700 dark:text-ink-300">
+                Sin verificar
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
+            {perfil.esta_verificado
+              ? 'Tu identidad ha sido verificada por el equipo de Solary.'
+              : perfil.documento_identidad
+                ? 'Recibimos tu documento. Un administrador lo revisará pronto.'
+                : 'Sube tu documento de identidad para obtener la insignia de verificado.'}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => docRef.current?.click()}
+            disabled={subiendoDoc}
+            className="mt-3 inline-flex items-center gap-2 rounded-xl border border-solar-300 bg-solar-50 px-4 py-2 text-sm font-semibold text-solar-700 transition hover:bg-solar-100 disabled:opacity-50 dark:border-solar-500/40 dark:bg-solar-500/10 dark:text-solar-300"
+          >
+            {subiendoDoc ? (
+              <>Subiendo…</>
+            ) : perfil.documento_identidad ? (
+              <>
+                <Upload className="size-4" /> Reemplazar documento
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="size-4" /> Subir documento de identidad
+              </>
+            )}
+          </button>
+          {perfil.documento_identidad && (
+            <a
+              href={perfil.documento_identidad}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 flex items-center justify-center gap-1 text-xs text-ink-400 hover:text-solar-500 sm:justify-start"
+            >
+              <FileText className="size-3.5" /> Ver documento subido
+            </a>
+          )}
+          <input
+            ref={docRef}
+            type="file"
+            accept="image/*,application/pdf"
+            hidden
+            onChange={(e) => e.target.files?.[0] && subirDoc(e.target.files[0])}
+          />
+        </div>
+      </div>
     </div>
   )
 }

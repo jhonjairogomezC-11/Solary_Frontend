@@ -122,3 +122,37 @@ export interface ConvocatoriaCreate {
   contacto_telefono?: string
   habilidades: number[]
 }
+
+export interface PerfilVoluntario {
+  id: string
+  usuario_id: string
+  tipo_documento: string
+  numero_documento: string
+  fecha_nacimiento: string
+  genero: string
+  municipio_id: number
+  disponibilidad: string
+  experiencia: string | null
+  foto_perfil: string | null
+  documento_identidad: string | null
+  esta_verificado: boolean
+  fecha_creacion: string
+}
+
+export interface PerfilFundacion {
+  id: string
+  usuario_id: string
+  nombre: string
+  nit: string
+  representante_legal: string
+  correo_institucional: string | null
+  telefono: string
+  direccion: string
+  municipio_id: number
+  descripcion: string
+  pagina_web: string | null
+  logo: string | null
+  documento_legal: string | null
+  estado_verificacion: string
+  fecha_creacion: string
+}
