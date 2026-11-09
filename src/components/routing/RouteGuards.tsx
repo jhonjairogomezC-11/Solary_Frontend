@@ -30,9 +30,26 @@ export function ProtectedRoute() {
 
 /** Solo usuarios NO autenticados (login, registro, etc.). */
 export function PublicOnlyRoute() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, usuario } = useAuth()
 
   if (isLoading) return <FullScreenLoader />
-  if (isAuthenticated) return <Navigate to="/app" replace />
+  if (isAuthenticated) {
+    return <Navigate to={usuario?.rol === 'ADMIN' ? '/admin' : '/app'} replace />
+  }
+  return <Outlet />
+}
+
+/** Solo administradores. */
+export function AdminRoute() {
+  const { isAuthenticated, isLoading, usuario } = useAuth()
+  const location = useLocation()
+
+  if (isLoading) return <FullScreenLoader />
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />
+  }
+  if (usuario?.rol !== 'ADMIN') {
+    return <Navigate to="/app" replace />
+  }
   return <Outlet />
 }

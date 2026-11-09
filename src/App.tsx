@@ -2,8 +2,9 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '@/auth/AuthContext'
-import { ProtectedRoute, PublicOnlyRoute } from '@/components/routing/RouteGuards'
+import { AdminRoute, ProtectedRoute, PublicOnlyRoute } from '@/components/routing/RouteGuards'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Logo } from '@/components/ui/Logo'
 
 const LandingPage = lazy(() =>
@@ -58,6 +59,30 @@ const FavoritosPage = lazy(() =>
   import('@/pages/app/FavoritosPage').then((m) => ({ default: m.FavoritosPage })),
 )
 
+// Admin (protegido por rol ADMIN)
+const AdminDashboardPage = lazy(() =>
+  import('@/pages/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })),
+)
+const AdminUsuariosPage = lazy(() =>
+  import('@/pages/admin/AdminUsuariosPage').then((m) => ({ default: m.AdminUsuariosPage })),
+)
+const AdminFundacionesPage = lazy(() =>
+  import('@/pages/admin/AdminFundacionesPage').then((m) => ({ default: m.AdminFundacionesPage })),
+)
+const AdminConvocatoriasPage = lazy(() =>
+  import('@/pages/admin/AdminConvocatoriasPage').then((m) => ({
+    default: m.AdminConvocatoriasPage,
+  })),
+)
+const AdminPostulacionesPage = lazy(() =>
+  import('@/pages/admin/AdminPostulacionesPage').then((m) => ({
+    default: m.AdminPostulacionesPage,
+  })),
+)
+const AdminCatalogosPage = lazy(() =>
+  import('@/pages/admin/AdminCatalogosPage').then((m) => ({ default: m.AdminCatalogosPage })),
+)
+
 function SuspenseFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-solar-50 dark:bg-ink-950">
@@ -98,6 +123,18 @@ export default function App() {
                 <Route path="mis-postulaciones" element={<MisPostulacionesPage />} />
                 <Route path="favoritos" element={<FavoritosPage />} />
                 <Route path="notificaciones" element={<NotificacionesPage />} />
+              </Route>
+            </Route>
+
+            {/* Panel de administración (solo rol ADMIN) */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboardPage />} />
+                <Route path="usuarios" element={<AdminUsuariosPage />} />
+                <Route path="fundaciones" element={<AdminFundacionesPage />} />
+                <Route path="convocatorias" element={<AdminConvocatoriasPage />} />
+                <Route path="postulaciones" element={<AdminPostulacionesPage />} />
+                <Route path="catalogos" element={<AdminCatalogosPage />} />
               </Route>
             </Route>
 

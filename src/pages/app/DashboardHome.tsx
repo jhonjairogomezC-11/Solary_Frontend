@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Bell, Compass, HeartHandshake, Megaphone, Plus, UserCog } from 'lucide-react'
+import {
+  ArrowRight,
+  Bell,
+  Compass,
+  HeartHandshake,
+  Megaphone,
+  Plus,
+  ShieldCheck,
+  UserCog,
+} from 'lucide-react'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -51,6 +60,26 @@ export function DashboardHome() {
         </div>
         <Badge tone={esFundacion ? 'blue' : 'solar'}>{esFundacion ? 'Fundación' : 'Voluntario'}</Badge>
       </motion.div>
+
+      {usuario?.rol === 'ADMIN' && (
+        <Link
+          to="/admin"
+          className="mt-6 flex items-center gap-3 rounded-2xl border border-violet-300 bg-violet-50 p-4 transition hover:shadow-soft dark:border-violet-500/40 dark:bg-violet-500/10"
+        >
+          <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-violet-600 text-white">
+            <ShieldCheck className="size-5" />
+          </span>
+          <div className="flex-1">
+            <p className="font-semibold text-violet-800 dark:text-violet-200">
+              Panel de administración
+            </p>
+            <p className="text-sm text-violet-700/80 dark:text-violet-300/80">
+              Gestiona usuarios, fundaciones, convocatorias y más.
+            </p>
+          </div>
+          <ArrowRight className="size-5 text-violet-500" />
+        </Link>
+      )}
 
       {!perfilCompleto && (
         <Link
