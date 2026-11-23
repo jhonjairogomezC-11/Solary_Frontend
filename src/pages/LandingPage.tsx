@@ -80,7 +80,7 @@ export function LandingPage() {
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg text-ink-500 dark:text-ink-300">
-            Solary conecta a personas que quieren ayudar con fundaciones que necesitan apoyo. Suma
+            Solari conecta a personas que quieren ayudar con fundaciones que necesitan apoyo. Suma
             tu granito de arena a causas que importan.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -167,7 +167,7 @@ export function LandingPage() {
       </section>
 
       <footer className="relative z-10 border-t border-ink-200/60 py-8 text-center text-sm text-ink-400 dark:border-ink-800">
-        © {new Date().getFullYear()} Solary. Hecho con propósito.
+        © {new Date().getFullYear()} Solari. Hecho con propósito.
       </footer>
     </div>
   )

@@ -3,6 +3,7 @@ import { BadgeCheck, FileText, Search, ShieldCheck, ShieldX, UserCog } from 'luc
 
 import { adminService } from '@/services/adminService'
 import type { AdminVoluntario, PaginatedAdmin } from '@/types/admin'
+import { abrirArchivoPrivado } from '@/lib/archivos'
 import { cn } from '@/lib/utils'
 
 const FILTROS = [
@@ -132,14 +133,13 @@ export function AdminVoluntariosPage() {
                   {v.numero_documento}
                 </p>
                 {v.documento_identidad ? (
-                  <a
-                    href={v.documento_identidad}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => abrirArchivoPrivado(v.documento_identidad as string)}
                     className="inline-flex items-center gap-1.5 text-solar-600 hover:underline dark:text-solar-400"
                   >
                     <FileText className="size-4" /> Ver documento subido
-                  </a>
+                  </button>
                 ) : (
                   <p className="text-xs italic text-ink-400">No ha subido documento.</p>
                 )}

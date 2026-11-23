@@ -58,8 +58,44 @@ const CompletarPerfilPage = lazy(() =>
 const FavoritosPage = lazy(() =>
   import('@/pages/app/FavoritosPage').then((m) => ({ default: m.FavoritosPage })),
 )
+const InteresesPage = lazy(() =>
+  import('@/pages/app/InteresesPage').then((m) => ({ default: m.InteresesPage })),
+)
+const LogrosPage = lazy(() =>
+  import('@/pages/app/LogrosPage').then((m) => ({ default: m.LogrosPage })),
+)
+const RankingPage = lazy(() =>
+  import('@/pages/app/RankingPage').then((m) => ({ default: m.RankingPage })),
+)
+const TrayectoriaPage = lazy(() =>
+  import('@/pages/app/TrayectoriaPage').then((m) => ({ default: m.TrayectoriaPage })),
+)
+const SoportePage = lazy(() =>
+  import('@/pages/app/SoportePage').then((m) => ({ default: m.SoportePage })),
+)
 
 // Admin (protegido por rol ADMIN)
+const HabilidadesPage = lazy(() =>
+  import('@/pages/app/HabilidadesPage').then((m) => ({ default: m.HabilidadesPage })),
+)
+const ProgramacionesPage = lazy(() =>
+  import('@/pages/app/ProgramacionesPage').then((m) => ({ default: m.ProgramacionesPage })),
+)
+const OfrecimientosPage = lazy(() =>
+  import('@/pages/app/OfrecimientosPage').then((m) => ({ default: m.OfrecimientosPage })),
+)
+const SolicitudesInteresPage = lazy(() =>
+  import('@/pages/app/SolicitudesInteresPage').then((m) => ({ default: m.SolicitudesInteresPage })),
+)
+const OrganizacionPublicaPage = lazy(() =>
+  import('@/pages/app/OrganizacionPublicaPage').then((m) => ({ default: m.OrganizacionPublicaPage })),
+)
+const PerfilPublicoPage = lazy(() =>
+  import('@/pages/app/PerfilPublicoPage').then((m) => ({ default: m.PerfilPublicoPage })),
+)
+const AdminGestionPage = lazy(() =>
+  import('@/pages/admin/AdminGestionPage').then((m) => ({ default: m.AdminGestionPage })),
+)
 const AdminDashboardPage = lazy(() =>
   import('@/pages/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })),
 )
@@ -127,6 +163,17 @@ export default function App() {
                 <Route path="mis-convocatorias" element={<MisConvocatoriasPage />} />
                 <Route path="mis-postulaciones" element={<MisPostulacionesPage />} />
                 <Route path="favoritos" element={<FavoritosPage />} />
+                <Route path="intereses" element={<InteresesPage />} />
+                <Route path="logros" element={<LogrosPage />} />
+                <Route path="ranking" element={<RankingPage />} />
+                <Route path="trayectoria" element={<TrayectoriaPage />} />
+                <Route path="soporte" element={<SoportePage />} />
+                <Route path="habilidades" element={<HabilidadesPage />} />
+                <Route path="programaciones" element={<ProgramacionesPage />} />
+                <Route path="ofrecimientos" element={<OfrecimientosPage />} />
+                <Route path="solicitudes-interes" element={<SolicitudesInteresPage />} />
+                <Route path="organizaciones/:id" element={<OrganizacionPublicaPage />} />
+                <Route path="perfil-publico" element={<PerfilPublicoPage />} />
                 <Route path="notificaciones" element={<NotificacionesPage />} />
               </Route>
             </Route>
@@ -141,6 +188,7 @@ export default function App() {
                 <Route path="convocatorias" element={<AdminConvocatoriasPage />} />
                 <Route path="postulaciones" element={<AdminPostulacionesPage />} />
                 <Route path="catalogos" element={<AdminCatalogosPage />} />
+                <Route path="gestion" element={<AdminGestionPage />} />
               </Route>
             </Route>
 

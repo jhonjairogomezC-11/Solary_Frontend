@@ -39,7 +39,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             Tu energía puede cambiar el mundo.
           </h2>
           <p className="mt-4 text-lg text-white/85">
-            Solary une a voluntarios y fundaciones para crear impacto donde más se necesita.
+            Solari une a voluntarios y fundaciones para crear impacto donde más se necesita.
           </p>
 
           <ul className="mt-10 space-y-4">
@@ -61,7 +61,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         </motion.div>
 
         <p className="relative z-10 text-sm text-white/60">
-          © {new Date().getFullYear()} Solary. Voluntariado con propósito.
+          © {new Date().getFullYear()} Solari. Voluntariado con propósito.
         </p>
       </aside>
 

@@ -1,14 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ImagePlus, X } from 'lucide-react'
 
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { HabilidadesPicker } from '@/components/ui/HabilidadesPicker'
 import { parseApiError } from '@/lib/apiClient'
+import { habilidadService, programacionService } from '@/services/alineacionService'
 import { convocatoriaService } from '@/services/convocatoriaService'
-import type { AreaImpacto, ConvocatoriaCreate, Habilidad, Municipio } from '@/types/convocatoria'
+import {
+  MAX_HABILIDADES,
+  MIN_HABILIDADES,
+  type HabilidadCat,
+  type UnidadIntervalo,
+} from '@/types/alineacion'
+import type { AreaImpacto, ConvocatoriaCreate, Municipio } from '@/types/convocatoria'
+
+const MAX_CICLO = 3
+const MAX_FOTOS = 8
 
 const MODALIDAD_OPTS = [
   { value: 'PRESENCIAL', label: 'Presencial' },
@@ -20,7 +31,7 @@ export function CrearConvocatoriaPage() {
   const navigate = useNavigate()
   const [areas, setAreas] = useState<AreaImpacto[]>([])
   const [municipios, setMunicipios] = useState<Municipio[]>([])
-  const [habilidades, setHabilidades] = useState<Habilidad[]>([])
+  const [habilidades, setHabilidades] = useState<HabilidadCat[]>([])
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -41,14 +52,38 @@ export function CrearConvocatoriaPage() {
     contacto_nombre: '',
     contacto_email: '',
     contacto_telefono: '',
+    // Campos ricos (opcionales)
+    objetivo: '',
+    impacto_esperado: '',
+    actividades_voluntario: '',
+    perfil_beneficiarios: '',
+    que_llevar: '',
+    recomendaciones: '',
+    politica_cancelacion: '',
+    nivel_experiencia: '',
+    horas_reconocidas: '0',
+    fecha_limite_postulacion: '',
+    dificultad: 'FACIL',
+  })
+  const [bene, setBene] = useState({
+    incluye_transporte: false,
+    incluye_alimentacion: false,
+    incluye_seguro: false,
+    otorga_certificado: false,
+    urgente: false,
   })
   const [habsSel, setHabsSel] = useState<number[]>([])
+  const [fotos, setFotos] = useState<File[]>([])
+  const previews = useMemo(() => fotos.map((f) => URL.createObjectURL(f)), [fotos])
+  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews])
+  const [recurrente, setRecurrente] = useState(false)
+  const [rec, setRec] = useState({ intervalo: '1', unidad: 'SEMANAS', duracion: '1' })
 
   useEffect(() => {
     Promise.all([
       convocatoriaService.areasImpacto(),
       convocatoriaService.municipios(),
-      convocatoriaService.habilidades(),
+      habilidadService.catalogo(),
     ])
       .then(([a, m, h]) => {
         setAreas(a)
@@ -59,9 +94,6 @@ export function CrearConvocatoriaPage() {
   }, [])
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
-
-  const toggleHab = (id: number) =>
-    setHabsSel((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]))
 
   const requierePresencia = form.modalidad !== 'VIRTUAL'
 
@@ -88,8 +120,44 @@ export function CrearConvocatoriaPage() {
       if (form.contacto_nombre) payload.contacto_nombre = form.contacto_nombre
       if (form.contacto_email) payload.contacto_email = form.contacto_email
       if (form.contacto_telefono) payload.contacto_telefono = form.contacto_telefono
+      // Campos ricos
+      if (form.objetivo) payload.objetivo = form.objetivo
+      if (form.impacto_esperado) payload.impacto_esperado = form.impacto_esperado
+      if (form.actividades_voluntario) payload.actividades_voluntario = form.actividades_voluntario
+      if (form.perfil_beneficiarios) payload.perfil_beneficiarios = form.perfil_beneficiarios
+      if (form.que_llevar) payload.que_llevar = form.que_llevar
+      if (form.recomendaciones) payload.recomendaciones = form.recomendaciones
+      if (form.politica_cancelacion) payload.politica_cancelacion = form.politica_cancelacion
+      if (form.nivel_experiencia) payload.nivel_experiencia = form.nivel_experiencia
+      if (form.fecha_limite_postulacion) payload.fecha_limite_postulacion = form.fecha_limite_postulacion
+      payload.horas_reconocidas = Number(form.horas_reconocidas) || 0
+      payload.dificultad = form.dificultad
+      payload.incluye_transporte = bene.incluye_transporte
+      payload.incluye_alimentacion = bene.incluye_alimentacion
+      payload.incluye_seguro = bene.incluye_seguro
+      payload.otorga_certificado = bene.otorga_certificado
+      payload.urgente = bene.urgente
+
+      if (recurrente) {
+        const { fecha_inicio, hora_inicio, hora_fin, cupo_maximo, ...plantilla } = payload
+        await programacionService.crear({
+          unidad_intervalo: rec.unidad as UnidadIntervalo,
+          intervalo: Number(rec.intervalo),
+          fecha_inicio,
+          duracion_dias: Number(rec.duracion),
+          hora_inicio,
+          hora_fin,
+          cupo_maximo,
+          plantilla: plantilla as unknown as Record<string, unknown>,
+        })
+        navigate('/app/programaciones', { replace: true })
+        return
+      }
 
       const creada = await convocatoriaService.crear(payload)
+      for (const foto of fotos) {
+        await convocatoriaService.subirImagen(creada.id, foto)
+      }
       if (publicar) {
         await convocatoriaService.publicar(creada.id)
       }
@@ -233,38 +301,155 @@ export function CrearConvocatoriaPage() {
           />
         </div>
 
-        {habilidades.length > 0 && (
-          <div>
-            <label className="mb-2 block text-sm font-medium text-ink-700 dark:text-ink-200">
-              Habilidades deseadas
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {habilidades.map((h) => {
-                const active = habsSel.includes(h.id)
-                return (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
+            Fotografías (opcional, hasta {MAX_FOTOS})
+          </label>
+          {previews.length > 0 && (
+            <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {previews.map((src, i) => (
+                <div key={src} className="relative overflow-hidden rounded-xl border border-ink-200 dark:border-ink-700">
+                  <img src={src} alt="" className="h-24 w-full object-cover" />
+                  {i === 0 && (
+                    <span className="absolute bottom-1 left-1 rounded bg-solar-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      Portada
+                    </span>
+                  )}
                   <button
-                    key={h.id}
                     type="button"
-                    onClick={() => toggleHab(h.id)}
-                    className={
-                      active
-                        ? 'rounded-full bg-gradient-to-r from-solar-500 to-solar-600 px-3 py-1 text-xs font-semibold text-white'
-                        : 'rounded-full border border-ink-200 px-3 py-1 text-xs font-medium text-ink-600 hover:border-solar-300 dark:border-ink-700 dark:text-ink-300'
-                    }
+                    aria-label="Quitar foto"
+                    onClick={() => setFotos((fs) => fs.filter((_, j) => j !== i))}
+                    className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-red-500 shadow hover:bg-white"
                   >
-                    {h.nombre}
+                    <X className="size-3.5" />
                   </button>
-                )
-              })}
+                </div>
+              ))}
             </div>
-          </div>
-        )}
+          )}
+          {fotos.length < MAX_FOTOS && (
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink-300 bg-ink-50/60 px-4 py-5 text-sm font-semibold text-ink-700 transition hover:border-solar-400 hover:bg-solar-50 hover:text-solar-700 dark:border-ink-600 dark:bg-ink-800/40 dark:text-ink-200">
+              <ImagePlus className="size-5" /> Agregar fotos (JPG, PNG o WEBP, máx. 5 MB)
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const nuevas = Array.from(e.target.files ?? [])
+                  setFotos((fs) => [...fs, ...nuevas].slice(0, MAX_FOTOS))
+                  e.target.value = ''
+                }}
+              />
+            </label>
+          )}
+          {recurrente && fotos.length > 0 && (
+            <p className="mt-2 text-xs text-ink-500">
+              Las actividades recurrentes aún no copian las fotos; agrégalas luego a cada convocatoria generada.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-ink-700 dark:text-ink-200">
+            Habilidades requeridas (entre {MIN_HABILIDADES} y {MAX_HABILIDADES} para publicar)
+          </label>
+          <HabilidadesPicker catalogo={habilidades} value={habsSel} onChange={setHabsSel} />
+        </div>
+
+        <div className="rounded-xl border border-ink-200/60 p-4 dark:border-ink-700">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
+            <input
+              type="checkbox"
+              checked={recurrente}
+              onChange={(e) => setRecurrente(e.target.checked)}
+              className="size-4 rounded border-ink-300 text-solar-500"
+            />
+            Es una actividad recurrente
+          </label>
+          {recurrente && (
+            <div className="mt-3 space-y-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Input
+                  label="Repetir cada"
+                  type="number"
+                  min={1}
+                  value={rec.intervalo}
+                  onChange={(e) => setRec((r) => ({ ...r, intervalo: e.target.value }))}
+                />
+                <Select
+                  label="Unidad"
+                  options={[
+                    { value: 'DIAS', label: 'Días' },
+                    { value: 'SEMANAS', label: 'Semanas' },
+                    { value: 'MESES', label: 'Meses' },
+                  ]}
+                  value={rec.unidad}
+                  onChange={(e) => setRec((r) => ({ ...r, unidad: e.target.value }))}
+                />
+                <Input
+                  label="Duración (días)"
+                  type="number"
+                  min={1}
+                  value={rec.duracion}
+                  onChange={(e) => setRec((r) => ({ ...r, duracion: e.target.value }))}
+                />
+              </div>
+              <p className="text-xs text-ink-500">
+                Se publican hasta {MAX_CICLO} convocatorias por ciclo. Luego la programación se
+                pausa hasta que la autorices en “Actividades recurrentes”. La fecha de inicio es la
+                primera; la fecha fin se calcula con la duración.
+              </p>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Input label="Contacto" placeholder="Nombre" value={form.contacto_nombre} onChange={(e) => set('contacto_nombre', e.target.value)} />
           <Input label="Email contacto" type="email" value={form.contacto_email} onChange={(e) => set('contacto_email', e.target.value)} />
           <Input label="Teléfono contacto" value={form.contacto_telefono} onChange={(e) => set('contacto_telefono', e.target.value)} />
         </div>
+
+        {/* Detalles adicionales (opcionales) para una convocatoria rica */}
+        <details className="group rounded-xl border border-ink-200/60 p-4 dark:border-ink-700">
+          <summary className="cursor-pointer select-none text-sm font-semibold text-ink-800 dark:text-ink-100">
+            Detalles adicionales (recomendado)
+          </summary>
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Select
+                label="Dificultad"
+                options={[
+                  { value: 'FACIL', label: 'Fácil' },
+                  { value: 'MEDIA', label: 'Media' },
+                  { value: 'DIFICIL', label: 'Difícil' },
+                  { value: 'MUY_DIFICIL', label: 'Muy difícil' },
+                ]}
+                value={form.dificultad}
+                onChange={(e) => set('dificultad', e.target.value)}
+              />
+              <Input label="Nivel de experiencia requerido" placeholder="Ej: Ninguno / Intermedio" value={form.nivel_experiencia} onChange={(e) => set('nivel_experiencia', e.target.value)} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input label="Horas de voluntariado reconocidas" type="number" min={0} value={form.horas_reconocidas} onChange={(e) => set('horas_reconocidas', e.target.value)} />
+              <Input label="Fecha límite de postulación" type="date" value={form.fecha_limite_postulacion} onChange={(e) => set('fecha_limite_postulacion', e.target.value)} />
+            </div>
+            <TextArea label="Objetivo de la actividad" value={form.objetivo} onChange={(v) => set('objetivo', v)} />
+            <TextArea label="Impacto social esperado" value={form.impacto_esperado} onChange={(v) => set('impacto_esperado', v)} />
+            <TextArea label="¿Qué harán los voluntarios?" value={form.actividades_voluntario} onChange={(v) => set('actividades_voluntario', v)} />
+            <TextArea label="Perfil de los beneficiarios" value={form.perfil_beneficiarios} onChange={(v) => set('perfil_beneficiarios', v)} />
+            <TextArea label="¿Qué deben llevar?" value={form.que_llevar} onChange={(v) => set('que_llevar', v)} />
+            <TextArea label="Recomendaciones" value={form.recomendaciones} onChange={(v) => set('recomendaciones', v)} />
+            <TextArea label="Política de cancelación" value={form.politica_cancelacion} onChange={(v) => set('politica_cancelacion', v)} />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Check label="Incluye transporte" checked={bene.incluye_transporte} onChange={(v) => setBene((b) => ({ ...b, incluye_transporte: v }))} />
+              <Check label="Incluye alimentación" checked={bene.incluye_alimentacion} onChange={(v) => setBene((b) => ({ ...b, incluye_alimentacion: v }))} />
+              <Check label="Incluye seguro" checked={bene.incluye_seguro} onChange={(v) => setBene((b) => ({ ...b, incluye_seguro: v }))} />
+              <Check label="Otorga certificado" checked={bene.otorga_certificado} onChange={(v) => setBene((b) => ({ ...b, otorga_certificado: v }))} />
+              <Check label="Marcar como urgente" checked={bene.urgente} onChange={(v) => setBene((b) => ({ ...b, urgente: v }))} />
+            </div>
+          </div>
+        </details>
 
         <div className="flex flex-col gap-3 border-t border-ink-200/60 pt-5 sm:flex-row dark:border-ink-700">
           <Button type="submit" variant="outline" size="lg" loading={saving} fullWidth>
@@ -276,5 +461,51 @@ export function CrearConvocatoriaPage() {
         </div>
       </form>
     </div>
+  )
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
+        {label}
+      </label>
+      <textarea
+        rows={2}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl border border-ink-200 bg-white/80 px-3.5 py-2.5 text-sm text-ink-900 shadow-sm transition focus:border-solar-400 focus:outline-none focus:ring-2 focus:ring-solar-400/70 dark:border-ink-700 dark:bg-ink-900/60 dark:text-white"
+      />
+    </div>
+  )
+}
+
+function Check({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-700 dark:text-ink-200">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="size-4 rounded border-ink-300 text-solar-500 focus:ring-solar-400"
+      />
+      {label}
+    </label>
   )
 }

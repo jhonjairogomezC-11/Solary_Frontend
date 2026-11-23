@@ -1,4 +1,4 @@
-/** Tipos del dominio de autenticación, espejo del contrato del backend Solary. */
+/** Tipos del dominio de autenticación, espejo del contrato del backend Solari. */
 
 export type Rol = 'VOLUNTARIO' | 'FUNDACION' | 'ADMIN'
 export type EstadoUsuario = 'ACTIVO' | 'BLOQUEADO' | 'SUSPENDIDO'
@@ -57,13 +57,15 @@ export interface RegisterFoundationPayload {
   password_confirmation: string
   telefono?: string
   nombre_fundacion: string
-  nit: string
+  tipo_organizacion?: string
+  constituida_legalmente?: boolean
+  nit?: string
   representante_legal: string
   correo_institucional?: string
   telefono_contacto: string
   direccion: string
   municipio_id: number
   descripcion: string
-  documento_legal: string
+  documento_legal?: string
   pagina_web?: string
 }

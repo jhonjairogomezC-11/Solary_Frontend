@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   Building2,
   CalendarCheck,
+  ClipboardList,
   LayoutDashboard,
   ListTree,
   LogOut,
@@ -27,6 +28,7 @@ const navItems = [
   { to: '/admin/convocatorias', label: 'Convocatorias', icon: Megaphone },
   { to: '/admin/postulaciones', label: 'Postulaciones', icon: CalendarCheck },
   { to: '/admin/catalogos', label: 'Catálogos', icon: ListTree },
+  { to: '/admin/gestion', label: 'Gestión y auditoría', icon: ClipboardList },
 ]
 
 export function AdminLayout() {

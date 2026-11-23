@@ -69,7 +69,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Bienvenido de vuelta" subtitle="Inicia sesión para continuar en Solary.">
+    <AuthLayout title="Bienvenido de vuelta" subtitle="Inicia sesión para continuar en Solari.">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {serverError && <Alert tone="error">{serverError}</Alert>}
 

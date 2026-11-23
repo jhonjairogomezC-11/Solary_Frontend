@@ -30,11 +30,16 @@ export function ConvocatoriaCard({ convocatoria, index = 0 }: { convocatoria: Co
             />
           ) : (
             <div className="flex size-full items-center justify-center">
-              <span className="font-display text-4xl font-black text-white/30">Solary</span>
+              <span className="font-display text-4xl font-black text-white/30">Solari</span>
             </div>
           )}
           <div className="absolute left-3 top-3">
             <Badge tone={mod.tone}>{mod.label}</Badge>
+          {convocatoria.coincidencia != null && (
+            <Badge tone={convocatoria.coincidencia >= 60 ? 'green' : 'gray'}>
+              {convocatoria.coincidencia}% compatible
+            </Badge>
+          )}
           </div>
           <div className="absolute right-3 top-3">
             <FavoritoButton convocatoriaId={convocatoria.id} size="sm" />

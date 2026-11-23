@@ -1,4 +1,4 @@
-/** Tipos del dominio de convocatorias, espejo del backend Solary. */
+/** Tipos del dominio de convocatorias, espejo del backend Solari. */
 
 export type Modalidad = 'PRESENCIAL' | 'VIRTUAL' | 'HIBRIDA'
 
@@ -18,10 +18,15 @@ export type EstadoPostulacion =
   | 'RETIRADO'
   | 'ASISTIO'
   | 'NO_ASISTIO'
+  | 'EN_REVISION'
+  | 'LISTA_ESPERA'
+  | 'CANCELADO_FUNDACION'
 
 export interface Habilidad {
   id: number
   nombre: string
+  categoria?: string | null
+  es_profesional?: boolean
 }
 
 export interface AreaImpacto {
@@ -60,12 +65,43 @@ export interface Convocatoria {
   contacto_nombre: string | null
   contacto_email: string | null
   contacto_telefono: string | null
+  // Campos ricos
+  objetivo: string | null
+  impacto_esperado: string | null
+  actividades_voluntario: string | null
+  perfil_beneficiarios: string | null
+  que_llevar: string | null
+  recomendaciones: string | null
+  incluye_transporte: boolean
+  incluye_alimentacion: boolean
+  incluye_seguro: boolean
+  politica_cancelacion: string | null
+  otorga_certificado: boolean
+  horas_reconocidas: number
+  nivel_experiencia: string | null
+  fecha_limite_postulacion: string | null
+  dificultad: string
+  urgente: boolean
   fecha_publicacion: string | null
   fecha_creacion: string
   fundacion_id: string
   categoria_id: number
   municipio_id: number | null
   habilidades: Habilidad[]
+  imagenes?: { id: string; ruta: string; orden: number }[]
+  programacion_id?: string | null
+  coincidencia?: number | null
+  habilidades_coinciden?: number[]
+  fundacion?: OrganizacionResumen | null
+}
+
+export interface OrganizacionResumen {
+  id: string
+  nombre: string
+  logo: string | null
+  verificada: boolean
+  tipo_organizacion?: string | null
+  constituida_legalmente?: boolean
 }
 
 export interface Postulacion {
@@ -120,6 +156,22 @@ export interface ConvocatoriaCreate {
   contacto_nombre?: string
   contacto_email?: string
   contacto_telefono?: string
+  objetivo?: string
+  impacto_esperado?: string
+  actividades_voluntario?: string
+  perfil_beneficiarios?: string
+  que_llevar?: string
+  recomendaciones?: string
+  incluye_transporte?: boolean
+  incluye_alimentacion?: boolean
+  incluye_seguro?: boolean
+  politica_cancelacion?: string
+  otorga_certificado?: boolean
+  horas_reconocidas?: number
+  nivel_experiencia?: string
+  fecha_limite_postulacion?: string
+  dificultad?: string
+  urgente?: boolean
   habilidades: number[]
 }
 
@@ -136,6 +188,17 @@ export interface PerfilVoluntario {
   foto_perfil: string | null
   documento_identidad: string | null
   esta_verificado: boolean
+  direccion: string | null
+  descripcion: string | null
+  telefono_contacto: string | null
+  nivel_educativo: string | null
+  profesion: string | null
+  idiomas: string | null
+  preferencia_modalidad: string | null
+  contacto_emergencia_nombre: string | null
+  contacto_emergencia_telefono: string | null
+  horas_acumuladas: number
+  actividades_completadas: number
   fecha_creacion: string
 }
 
@@ -143,7 +206,15 @@ export interface PerfilFundacion {
   id: string
   usuario_id: string
   nombre: string
-  nit: string
+  nit: string | null
+  tipo_organizacion?: string
+  constituida_legalmente?: boolean
+  historia?: string | null
+  mision?: string | null
+  mostrar_telefono?: boolean
+  mostrar_correo?: boolean
+  mostrar_direccion?: boolean
+  verificacion_documental?: string
   representante_legal: string
   correo_institucional: string | null
   telefono: string

@@ -7,8 +7,8 @@
  * acceso de vida corta con rotación de refresh. Si más adelante se introduce un
  * backend-for-frontend, conviene migrar a cookies httpOnly.
  */
-const ACCESS_KEY = 'solary.access'
-const REFRESH_KEY = 'solary.refresh'
+const ACCESS_KEY = 'solari.access'
+const REFRESH_KEY = 'solari.refresh'
 
 export const tokenStore = {
   getAccess(): string | null {

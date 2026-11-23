@@ -43,6 +43,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               'h-11 w-full rounded-xl border bg-white/80 px-3.5 text-sm text-ink-900 shadow-sm backdrop-blur transition',
               'placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-solar-400/70 focus:border-solar-400',
               'dark:bg-ink-900/60 dark:text-white dark:placeholder:text-ink-500',
+              'disabled:cursor-not-allowed disabled:border-ink-200 disabled:bg-ink-100 disabled:text-ink-500 disabled:shadow-none',
+              'dark:disabled:border-ink-700 dark:disabled:bg-ink-800 dark:disabled:text-ink-400',
               icon && 'pl-10',
               isPassword && 'pr-11',
               error

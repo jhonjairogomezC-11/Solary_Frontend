@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Bell, CheckCheck, Loader2 } from 'lucide-react'
+import { Bell, CheckCheck, Loader2, Settings2 } from 'lucide-react'
 
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { parseApiError } from '@/lib/apiClient'
 import { timeAgo } from '@/lib/utils'
 import { convocatoriaService } from '@/services/convocatoriaService'
+import { voluntarioService } from '@/services/voluntarioService'
 import { cn } from '@/lib/utils'
 import type { Notificacion } from '@/types/convocatoria'
+import type { PreferenciasNotificacion } from '@/types/voluntario'
 
 export function NotificacionesPage() {
   const [items, setItems] = useState<Notificacion[]>([])
@@ -62,7 +64,7 @@ export function NotificacionesPage() {
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white">
             Notificaciones
           </h1>
-          <p className="mt-1 text-ink-500 dark:text-ink-400">Novedades sobre tu actividad en Solary.</p>
+          <p className="mt-1 text-ink-500 dark:text-ink-400">Novedades sobre tu actividad en Solari.</p>
         </div>
         {hayNoLeidas && (
           <Button variant="outline" size="sm" onClick={marcarTodas}>
@@ -72,6 +74,8 @@ export function NotificacionesPage() {
       </div>
 
       {error && <Alert tone="error" className="mb-4">{error}</Alert>}
+
+      <PreferenciasPanel />
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -117,5 +121,65 @@ export function NotificacionesPage() {
         </div>
       )}
     </div>
+  )
+}
+
+const PREF_LABELS: { key: keyof PreferenciasNotificacion; label: string }[] = [
+  { key: 'notif_postulaciones', label: 'Postulaciones y cambios de estado' },
+  { key: 'notif_convocatorias', label: 'Nuevas convocatorias compatibles' },
+  { key: 'notif_recordatorios', label: 'Recordatorios de actividades' },
+  { key: 'notif_logros', label: 'Logros y experiencia (XP)' },
+  { key: 'notif_soporte', label: 'Respuestas de soporte' },
+]
+
+function PreferenciasPanel() {
+  const [prefs, setPrefs] = useState<PreferenciasNotificacion | null>(null)
+  const [guardando, setGuardando] = useState(false)
+
+  useEffect(() => {
+    voluntarioService
+      .preferencias()
+      .then(setPrefs)
+      .catch(() => {})
+  }, [])
+
+  const toggle = async (key: keyof PreferenciasNotificacion) => {
+    if (!prefs || guardando) return
+    const actualizado = { ...prefs, [key]: !prefs[key] }
+    setPrefs(actualizado)
+    setGuardando(true)
+    try {
+      await voluntarioService.guardarPreferencias(actualizado)
+    } catch {
+      setPrefs(prefs) // revierte
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  if (!prefs) return null
+
+  return (
+    <details className="mb-5 rounded-2xl border border-ink-200/60 bg-white/70 p-4 dark:border-ink-700/60 dark:bg-ink-900/50">
+      <summary className="flex cursor-pointer select-none items-center gap-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
+        <Settings2 className="size-4 text-solar-500" /> Preferencias de notificación
+      </summary>
+      <div className="mt-4 space-y-2">
+        {PREF_LABELS.map(({ key, label }) => (
+          <label
+            key={key}
+            className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-1 py-1.5 text-sm text-ink-700 dark:text-ink-200"
+          >
+            {label}
+            <input
+              type="checkbox"
+              checked={prefs[key]}
+              onChange={() => toggle(key)}
+              className="size-4 rounded border-ink-300 text-solar-500 focus:ring-solar-400"
+            />
+          </label>
+        ))}
+      </div>
+    </details>
   )
 }

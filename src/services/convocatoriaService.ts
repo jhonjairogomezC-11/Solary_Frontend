@@ -1,4 +1,4 @@
-import { api } from '@/lib/apiClient'
+﻿import { api } from '@/lib/apiClient'
 import type {
   AreaImpacto,
   Convocatoria,
@@ -12,6 +12,7 @@ import type {
   PerfilVoluntario,
   Postulacion,
 } from '@/types/convocatoria'
+import type { HistorialPostulacion, PostulantesPage } from '@/types/alineacion'
 
 export interface ConvocatoriaFiltros {
   categoria_id?: number
@@ -23,7 +24,7 @@ export interface ConvocatoriaFiltros {
 }
 
 export const convocatoriaService = {
-  // ─── Público ───
+  // â”€â”€â”€ PÃºblico â”€â”€â”€
   async listar(filtros: ConvocatoriaFiltros = {}): Promise<Paginated<Convocatoria>> {
     const { data } = await api.get<Paginated<Convocatoria>>('/publicaciones', { params: filtros })
     return data
@@ -34,7 +35,7 @@ export const convocatoriaService = {
     return data
   },
 
-  // ─── Fundación ───
+  // â”€â”€â”€ FundaciÃ³n â”€â”€â”€
   async crear(payload: ConvocatoriaCreate): Promise<Convocatoria> {
     const { data } = await api.post<Convocatoria>('/publicaciones', payload)
     return data
@@ -42,6 +43,18 @@ export const convocatoriaService = {
 
   async actualizar(id: string, payload: Partial<ConvocatoriaCreate>): Promise<Convocatoria> {
     const { data } = await api.put<Convocatoria>(`/publicaciones/${id}`, payload)
+    return data
+  },
+
+  async subirImagen(id: string, file: File): Promise<Convocatoria> {
+    const form = new FormData()
+    form.append('archivo', file)
+    const { data } = await api.post<Convocatoria>(`/publicaciones/${id}/imagenes`, form)
+    return data
+  },
+
+  async eliminarImagen(id: string, imagenId: string): Promise<Convocatoria> {
+    const { data } = await api.delete<Convocatoria>(`/publicaciones/${id}/imagenes/${imagenId}`)
     return data
   },
 
@@ -62,7 +75,7 @@ export const convocatoriaService = {
     return data
   },
 
-  // ─── Postulaciones ───
+  // â”€â”€â”€ Postulaciones â”€â”€â”€
   async postular(publicacion_id: string, mensaje_voluntario?: string): Promise<Postulacion> {
     const { data } = await api.post<Postulacion>('/postulaciones', {
       publicacion_id,
@@ -78,32 +91,53 @@ export const convocatoriaService = {
     return data
   },
 
-  async retirar(postulacion_id: string): Promise<Postulacion> {
-    const { data } = await api.post<Postulacion>(`/postulaciones/${postulacion_id}/retirar`)
+  async retirar(postulacion_id: string, confirmar = false, motivo?: string): Promise<Postulacion> {
+    const { data } = await api.post<Postulacion>(`/postulaciones/${postulacion_id}/retirar`, {
+      confirmar,
+      ...(motivo ? { motivo } : {}),
+    })
     return data
   },
 
-  async postulacionesDe(publicacion_id: string, page = 1): Promise<Paginated<Postulacion>> {
-    const { data } = await api.get<Paginated<Postulacion>>(
+  async postulacionesDe(publicacion_id: string, page = 1): Promise<PostulantesPage> {
+    const { data } = await api.get<PostulantesPage>(
       `/publicaciones/${publicacion_id}/postulaciones`,
-      { params: { page } },
+      { params: { page, per_page: 50 } },
     )
     return data
   },
 
   async responder(
     postulacion_id: string,
-    estado: 'ACEPTADO' | 'RECHAZADO',
-    extra: { motivo_rechazo?: string; comentario_fundacion?: string } = {},
+    estado: 'ACEPTADO' | 'RECHAZADO' | 'EN_REVISION' | 'LISTA_ESPERA',
   ): Promise<Postulacion> {
     const { data } = await api.put<Postulacion>(`/postulaciones/${postulacion_id}/responder`, {
       estado,
-      ...extra,
     })
     return data
   },
 
-  // ─── Catálogos ───
+  async confirmarAsistencia(
+    postulacion_id: string,
+    asistio: boolean,
+    calificacion?: number,
+    comentario_fundacion?: string,
+  ): Promise<Postulacion> {
+    const { data } = await api.post<Postulacion>(
+      `/postulaciones/${postulacion_id}/confirmar-asistencia`,
+      { asistio, calificacion, comentario_fundacion },
+    )
+    return data
+  },
+
+  async historial(postulacion_id: string): Promise<HistorialPostulacion[]> {
+    const { data } = await api.get<HistorialPostulacion[]>(
+      `/postulaciones/${postulacion_id}/historial`,
+    )
+    return data
+  },
+
+  // â”€â”€â”€ CatÃ¡logos â”€â”€â”€
   async departamentos(): Promise<Departamento[]> {
     const { data } = await api.get<Departamento[]>('/catalogos/departamentos')
     return data
@@ -126,7 +160,7 @@ export const convocatoriaService = {
     return data
   },
 
-  // ─── Notificaciones ───
+  // â”€â”€â”€ Notificaciones â”€â”€â”€
   async notificaciones(page = 1): Promise<Paginated<Notificacion>> {
     const { data } = await api.get<Paginated<Notificacion>>('/notificaciones', {
       params: { page },
@@ -147,7 +181,7 @@ export const convocatoriaService = {
     await api.post('/notificaciones/marcar-todas-leidas')
   },
 
-  // ─── Perfil ───
+  // â”€â”€â”€ Perfil â”€â”€â”€
   async estadoPerfil(): Promise<{ rol: string; perfil_completo: boolean }> {
     const { data } = await api.get<{ rol: string; perfil_completo: boolean }>('/perfil/estado')
     return data
@@ -161,6 +195,15 @@ export const convocatoriaService = {
     municipio_id: number
     disponibilidad: string
     experiencia?: string
+    direccion?: string
+    descripcion?: string
+    telefono_contacto?: string
+    nivel_educativo?: string
+    profesion?: string
+    idiomas?: string
+    preferencia_modalidad?: string
+    contacto_emergencia_nombre?: string
+    contacto_emergencia_telefono?: string
   }): Promise<unknown> {
     const { data } = await api.put('/perfil/voluntario', payload)
     return data
@@ -168,14 +211,16 @@ export const convocatoriaService = {
 
   async guardarPerfilFundacion(payload: {
     nombre_fundacion: string
-    nit: string
+    tipo_organizacion?: string
+    constituida_legalmente?: boolean
+    nit?: string
     representante_legal: string
     correo_institucional?: string
     telefono_contacto: string
     direccion: string
     municipio_id: number
     descripcion: string
-    documento_legal: string
+    documento_legal?: string
     pagina_web?: string
   }): Promise<unknown> {
     const { data } = await api.put('/perfil/fundacion', payload)
@@ -221,7 +266,7 @@ export const convocatoriaService = {
     return data.url
   },
 
-  // ─── Favoritos ───
+  // â”€â”€â”€ Favoritos â”€â”€â”€
   async favoritosIds(): Promise<string[]> {
     const { data } = await api.get<string[]>('/favoritos/ids')
     return data
@@ -241,3 +286,4 @@ export const convocatoriaService = {
     return data
   },
 }
+

@@ -14,8 +14,11 @@ import {
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { ConvocatoriaCard } from '@/components/convocatorias/ConvocatoriaCard'
 import { useAuth } from '@/auth/AuthContext'
 import { convocatoriaService } from '@/services/convocatoriaService'
+import { voluntarioService } from '@/services/voluntarioService'
+import type { Convocatoria } from '@/types/convocatoria'
 
 export function DashboardHome() {
   const { usuario } = useAuth()
@@ -23,6 +26,7 @@ export function DashboardHome() {
   const primerNombre = usuario?.nombre.split(' ')[0] ?? ''
   const [noLeidas, setNoLeidas] = useState(0)
   const [perfilCompleto, setPerfilCompleto] = useState(true)
+  const [recomendadas, setRecomendadas] = useState<Convocatoria[]>([])
 
   useEffect(() => {
     convocatoriaService.noLeidas().then(setNoLeidas).catch(() => {})
@@ -30,7 +34,13 @@ export function DashboardHome() {
       .estadoPerfil()
       .then((e) => setPerfilCompleto(e.perfil_completo))
       .catch(() => {})
-  }, [])
+    if (!esFundacion) {
+      voluntarioService
+        .recomendaciones()
+        .then((r) => setRecomendadas(r.slice(0, 3)))
+        .catch(() => {})
+    }
+  }, [esFundacion])
 
   const accionesFundacion = [
     { to: '/app/convocatorias/nueva', label: 'Publicar convocatoria', desc: 'Crea una nueva oportunidad', icon: Plus },
@@ -154,6 +164,27 @@ export function DashboardHome() {
           ))}
         </div>
       </div>
+
+      {!esFundacion && recomendadas.length > 0 && (
+        <div className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-display text-xl font-bold text-ink-900 dark:text-white">
+              Recomendadas para ti
+            </h2>
+            <Link
+              to="/app/convocatorias"
+              className="text-sm font-medium text-solar-600 hover:underline dark:text-solar-400"
+            >
+              Ver todas
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {recomendadas.map((c, i) => (
+              <ConvocatoriaCard key={c.id} convocatoria={c} index={i} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {esFundacion && (
         <div className="mt-8 rounded-3xl bg-gradient-to-br from-solar-500 to-orange-600 p-8 text-center text-white">

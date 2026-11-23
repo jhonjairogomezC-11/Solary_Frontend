@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * Validaciones espejo del backend Solary. La validación final SIEMPRE ocurre en
+ * Validaciones espejo del backend Solari. La validación final SIEMPRE ocurre en
  * el servidor; esto es solo para UX (feedback inmediato).
  */
 
@@ -56,14 +56,16 @@ export const foundationSchema = z
   .object({
     ...baseRegister,
     nombre_fundacion: z.string().min(2, 'Nombre de la fundación requerido.').max(150),
-    nit: z.string().regex(/^\d{7,10}-\d$/, 'Formato de NIT: 000000000-0'),
+    tipo_organizacion: z.string().min(1),
+    constituida_legalmente: z.boolean(),
+    nit: z.string().optional().or(z.literal('')),
     representante_legal: z.string().min(2, 'Nombre del representante requerido.').max(120),
     correo_institucional: z.string().email('Correo no válido.').optional().or(z.literal('')),
     telefono_contacto: z.string().regex(/^[0-9+\s-]{7,20}$/, 'Teléfono no válido.'),
     direccion: z.string().min(4, 'Dirección requerida.').max(200),
     municipio_id: z.coerce.number().int().positive('Selecciona un municipio.'),
     descripcion: z.string().min(10, 'Describe tu fundación (mín. 10 caracteres).').max(1000),
-    documento_legal: z.string().min(3, 'Referencia del documento legal requerida.').max(255),
+    documento_legal: z.string().max(255).optional().or(z.literal('')),
     pagina_web: z.string().url('URL no válida.').optional().or(z.literal('')),
     acepta_terminos: z.literal(true, {
       message: 'Debes aceptar los términos y condiciones.',
@@ -72,6 +74,14 @@ export const foundationSchema = z
   .refine((d) => d.password === d.password_confirmation, {
     message: 'Las contraseñas no coinciden.',
     path: ['password_confirmation'],
+  })
+  .refine((d) => !d.constituida_legalmente || /^\d{7,10}-\d$/.test(d.nit ?? ''), {
+    message: 'Formato de NIT: 000000000-0',
+    path: ['nit'],
+  })
+  .refine((d) => !d.constituida_legalmente || (d.documento_legal ?? '').trim().length >= 3, {
+    message: 'Referencia del documento legal requerida.',
+    path: ['documento_legal'],
   })
 export type FoundationForm = z.infer<typeof foundationSchema>
 

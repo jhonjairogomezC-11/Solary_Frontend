@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
+  BadgeCheck,
   CalendarDays,
   Clock,
   Link2,
@@ -37,6 +38,7 @@ export function ConvocatoriaDetallePage() {
   const [postulando, setPostulando] = useState(false)
   const [postulado, setPostulado] = useState(false)
   const [postError, setPostError] = useState<string | null>(null)
+  const [fotoActiva, setFotoActiva] = useState(0)
 
   useEffect(() => {
     if (!id) return
@@ -85,6 +87,7 @@ export function ConvocatoriaDetallePage() {
   }
 
   const mod = modalidadBadge(conv.modalidad)
+  const fotos = conv.imagenes?.length ? conv.imagenes.map((i) => i.ruta) : conv.imagen ? [conv.imagen] : []
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -96,12 +99,16 @@ export function ConvocatoriaDetallePage() {
       </button>
 
       <div className="overflow-hidden rounded-3xl border border-ink-200/60 bg-white/80 backdrop-blur dark:border-ink-700/60 dark:bg-ink-900/50">
-        <div className="relative h-48 bg-gradient-to-br from-solar-400 to-orange-600 sm:h-56">
-          {conv.imagen ? (
-            <img src={conv.imagen} alt={conv.titulo} className="size-full object-cover" />
+        <div className="relative h-56 bg-gradient-to-br from-solar-400 to-orange-600 sm:h-80">
+          {fotos.length > 0 ? (
+            <img
+              src={fotos[Math.min(fotoActiva, fotos.length - 1)]}
+              alt={conv.titulo}
+              className="size-full object-cover"
+            />
           ) : (
             <div className="flex size-full items-center justify-center">
-              <span className="font-display text-5xl font-black text-white/30">Solary</span>
+              <span className="font-display text-5xl font-black text-white/30">Solari</span>
             </div>
           )}
           <div className="absolute left-4 top-4">
@@ -114,10 +121,42 @@ export function ConvocatoriaDetallePage() {
           )}
         </div>
 
+        {fotos.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto border-b border-ink-200/60 bg-ink-50/60 p-3 dark:border-ink-700/60 dark:bg-ink-900/40">
+            {fotos.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setFotoActiva(i)}
+                aria-label={`Ver foto ${i + 1}`}
+                className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition ${i === fotoActiva ? 'border-solar-500' : 'border-transparent opacity-70 hover:opacity-100'}`}
+              >
+                <img src={src} alt="" className="size-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="p-6 sm:p-8">
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink-900 dark:text-white sm:text-3xl">
             {conv.titulo}
           </h1>
+
+          {conv.fundacion && (
+            <Link
+              to={`/app/organizaciones/${conv.fundacion.id}`}
+              className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-solar-600 hover:underline dark:text-solar-400"
+            >
+              {conv.fundacion.nombre}
+              {conv.fundacion.verificada && <BadgeCheck className="size-4 text-blue-500" aria-label="Organización verificada" />}
+            </Link>
+          )}
+          {conv.coincidencia != null && (
+            <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">
+              <strong>{conv.coincidencia}% de compatibilidad</strong> con tus habilidades. Es solo una
+              referencia: puedes postularte igual.
+            </p>
+          )}
 
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Info icon={CalendarDays} label="Fechas">
@@ -145,10 +184,39 @@ export function ConvocatoriaDetallePage() {
             )}
           </div>
 
+          {/* Chips informativos de beneficios/certificado/horas */}
+          <div className="mt-5 flex flex-wrap gap-2">
+            {conv.urgente && <Badge tone="red">Urgente</Badge>}
+            {conv.otorga_certificado && <Badge tone="green">Otorga certificado</Badge>}
+            {conv.horas_reconocidas > 0 && (
+              <Badge tone="solar">{conv.horas_reconocidas} h reconocidas</Badge>
+            )}
+            {conv.incluye_transporte && <Badge tone="blue">Transporte incluido</Badge>}
+            {conv.incluye_alimentacion && <Badge tone="blue">Alimentación incluida</Badge>}
+            {conv.incluye_seguro && <Badge tone="blue">Seguro / cobertura</Badge>}
+            {conv.nivel_experiencia && <Badge tone="gray">Nivel: {conv.nivel_experiencia}</Badge>}
+          </div>
+
+          {conv.fecha_limite_postulacion && (
+            <div className="mt-4">
+              <Info icon={CalendarDays} label="Fecha límite de postulación">
+                {formatDate(conv.fecha_limite_postulacion)}
+              </Info>
+            </div>
+          )}
+
           <div className="mt-6">
             <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white">Descripción</h2>
             <p className="mt-2 whitespace-pre-line text-ink-600 dark:text-ink-300">{conv.descripcion}</p>
           </div>
+
+          <Seccion titulo="Objetivo de la actividad" texto={conv.objetivo} />
+          <Seccion titulo="Impacto social esperado" texto={conv.impacto_esperado} />
+          <Seccion titulo="¿Qué harás como voluntario?" texto={conv.actividades_voluntario} />
+          <Seccion titulo="Perfil de los beneficiarios" texto={conv.perfil_beneficiarios} />
+          <Seccion titulo="¿Qué debes llevar?" texto={conv.que_llevar} />
+          <Seccion titulo="Recomendaciones" texto={conv.recomendaciones} />
+          <Seccion titulo="Política de cancelación" texto={conv.politica_cancelacion} />
 
           {conv.requisitos_adicionales && (
             <div className="mt-5">
@@ -164,7 +232,10 @@ export function ConvocatoriaDetallePage() {
               <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white">Habilidades</h2>
               <div className="mt-2 flex flex-wrap gap-2">
                 {conv.habilidades.map((h) => (
-                  <Badge key={h.id} tone="solar">{h.nombre}</Badge>
+                  <Badge key={h.id} tone={conv.habilidades_coinciden?.includes(h.id) ? 'green' : 'solar'}>
+                    {conv.habilidades_coinciden?.includes(h.id) ? '✓ ' : ''}
+                    {h.nombre}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -230,6 +301,16 @@ export function ConvocatoriaDetallePage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function Seccion({ titulo, texto }: { titulo: string; texto: string | null }) {
+  if (!texto) return null
+  return (
+    <div className="mt-5">
+      <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white">{titulo}</h2>
+      <p className="mt-2 whitespace-pre-line text-ink-600 dark:text-ink-300">{texto}</p>
     </div>
   )
 }

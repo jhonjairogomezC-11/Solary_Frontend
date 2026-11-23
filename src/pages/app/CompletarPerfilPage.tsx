@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   BadgeCheck,
   Camera,
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { useAuth } from '@/auth/AuthContext'
 import { parseApiError } from '@/lib/apiClient'
+import { abrirArchivoPrivado } from '@/lib/archivos'
 import { convocatoriaService } from '@/services/convocatoriaService'
 import type { Municipio, PerfilFundacion, PerfilVoluntario } from '@/types/convocatoria'
 
@@ -60,9 +61,20 @@ export function CompletarPerfilPage() {
     municipio_id: '',
     disponibilidad: '',
     experiencia: '',
+    direccion: '',
+    descripcion: '',
+    telefono_contacto: '',
+    nivel_educativo: '',
+    profesion: '',
+    idiomas: '',
+    preferencia_modalidad: '',
+    contacto_emergencia_nombre: '',
+    contacto_emergencia_telefono: '',
   })
   const [fund, setFund] = useState({
     nombre_fundacion: '',
+    tipo_organizacion: 'FUNDACION',
+    constituida_legalmente: true,
     nit: '',
     representante_legal: '',
     correo_institucional: '',
@@ -95,13 +107,24 @@ export function CompletarPerfilPage() {
             municipio_id: String(pv.municipio_id),
             disponibilidad: pv.disponibilidad,
             experiencia: pv.experiencia ?? '',
+            direccion: pv.direccion ?? '',
+            descripcion: pv.descripcion ?? '',
+            telefono_contacto: pv.telefono_contacto ?? '',
+            nivel_educativo: pv.nivel_educativo ?? '',
+            profesion: pv.profesion ?? '',
+            idiomas: pv.idiomas ?? '',
+            preferencia_modalidad: pv.preferencia_modalidad ?? '',
+            contacto_emergencia_nombre: pv.contacto_emergencia_nombre ?? '',
+            contacto_emergencia_telefono: pv.contacto_emergencia_telefono ?? '',
           })
         }
         if (pf) {
           setPerfilFund(pf)
           setFund({
             nombre_fundacion: pf.nombre,
-            nit: pf.nit,
+            tipo_organizacion: pf.tipo_organizacion ?? 'FUNDACION',
+            constituida_legalmente: pf.constituida_legalmente ?? true,
+            nit: pf.nit ?? '',
             representante_legal: pf.representante_legal,
             correo_institucional: pf.correo_institucional ?? '',
             telefono_contacto: pf.telefono,
@@ -130,14 +153,16 @@ export function CompletarPerfilPage() {
       if (esFundacion) {
         const pf = await convocatoriaService.guardarPerfilFundacion({
           nombre_fundacion: fund.nombre_fundacion,
-          nit: fund.nit,
+          tipo_organizacion: fund.tipo_organizacion,
+          constituida_legalmente: fund.constituida_legalmente,
+          nit: fund.constituida_legalmente ? fund.nit || undefined : undefined,
           representante_legal: fund.representante_legal,
           correo_institucional: fund.correo_institucional || undefined,
           telefono_contacto: fund.telefono_contacto,
           direccion: fund.direccion,
           municipio_id: Number(fund.municipio_id),
           descripcion: fund.descripcion,
-          documento_legal: fund.documento_legal,
+          documento_legal: fund.constituida_legalmente ? fund.documento_legal || undefined : undefined,
           pagina_web: fund.pagina_web || undefined,
         })
         setPerfilFund(pf as PerfilFundacion)
@@ -150,6 +175,15 @@ export function CompletarPerfilPage() {
           municipio_id: Number(vol.municipio_id),
           disponibilidad: vol.disponibilidad,
           experiencia: vol.experiencia || undefined,
+          direccion: vol.direccion || undefined,
+          descripcion: vol.descripcion || undefined,
+          telefono_contacto: vol.telefono_contacto || undefined,
+          nivel_educativo: vol.nivel_educativo || undefined,
+          profesion: vol.profesion || undefined,
+          idiomas: vol.idiomas || undefined,
+          preferencia_modalidad: vol.preferencia_modalidad || undefined,
+          contacto_emergencia_nombre: vol.contacto_emergencia_nombre || undefined,
+          contacto_emergencia_telefono: vol.contacto_emergencia_telefono || undefined,
         })
         setPerfilVol(pv as PerfilVoluntario)
       }
@@ -231,8 +265,30 @@ export function CompletarPerfilPage() {
         {esFundacion ? (
           <>
             <Input label="Nombre de la fundación" value={fund.nombre_fundacion} onChange={(e) => setFund({ ...fund, nombre_fundacion: e.target.value })} required />
+            <Select
+              label="Tipo de organización"
+              options={[
+                { value: 'FUNDACION', label: 'Fundación' },
+                { value: 'REFUGIO', label: 'Refugio' },
+                { value: 'COLECTIVO', label: 'Colectivo' },
+                { value: 'INICIATIVA_CIUDADANA', label: 'Iniciativa ciudadana' },
+                { value: 'OTRA', label: 'Otra' },
+              ]}
+              value={fund.tipo_organizacion}
+              onChange={(e) => setFund({ ...fund, tipo_organizacion: e.target.value })}
+            />
+            <label className="flex items-center gap-2 text-sm text-ink-700 dark:text-ink-200">
+              <input
+                type="checkbox"
+                checked={fund.constituida_legalmente}
+                onChange={(e) => setFund({ ...fund, constituida_legalmente: e.target.checked })}
+              />
+              Estamos legalmente constituidos (NIT y documento legal). Si no, puedes participar igual.
+            </label>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input label="NIT" placeholder="900123456-7" value={fund.nit} onChange={(e) => setFund({ ...fund, nit: e.target.value })} required />
+              {fund.constituida_legalmente && (
+                <Input label="NIT" placeholder="900123456-7" value={fund.nit} onChange={(e) => setFund({ ...fund, nit: e.target.value })} required />
+              )}
               <Input label="Representante legal" value={fund.representante_legal} onChange={(e) => setFund({ ...fund, representante_legal: e.target.value })} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -243,7 +299,9 @@ export function CompletarPerfilPage() {
               <Select label="Municipio" placeholder="Selecciona" options={muniOpts} value={fund.municipio_id} onChange={(e) => setFund({ ...fund, municipio_id: e.target.value })} required />
               <Input label="Dirección" value={fund.direccion} onChange={(e) => setFund({ ...fund, direccion: e.target.value })} required />
             </div>
-            <Input label="Documento legal (referencia)" placeholder="Certificado / RUT" value={fund.documento_legal} onChange={(e) => setFund({ ...fund, documento_legal: e.target.value })} required />
+            {fund.constituida_legalmente && (
+              <Input label="Documento legal (referencia)" placeholder="Certificado / RUT" value={fund.documento_legal} onChange={(e) => setFund({ ...fund, documento_legal: e.target.value })} required />
+            )}
             <Input label="Página web (opcional)" placeholder="https://..." value={fund.pagina_web} onChange={(e) => setFund({ ...fund, pagina_web: e.target.value })} />
             <div>
               <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">Descripción</label>
@@ -259,19 +317,62 @@ export function CompletarPerfilPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Select label="Tipo de documento" placeholder="Selecciona" options={TIPO_DOC} value={vol.tipo_documento} onChange={(e) => setVol({ ...vol, tipo_documento: e.target.value })} required />
-              <Input label="Número de documento" value={vol.numero_documento} onChange={(e) => setVol({ ...vol, numero_documento: e.target.value })} required />
+              <Select label="Tipo de documento" placeholder="Selecciona" options={TIPO_DOC} value={vol.tipo_documento} onChange={(e) => setVol({ ...vol, tipo_documento: e.target.value })} disabled={yaCompleto} required />
+              <Input label="Número de documento" value={vol.numero_documento} onChange={(e) => setVol({ ...vol, numero_documento: e.target.value })} disabled={yaCompleto} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input label="Fecha de nacimiento" type="date" value={vol.fecha_nacimiento} onChange={(e) => setVol({ ...vol, fecha_nacimiento: e.target.value })} required />
-              <Select label="Género" placeholder="Selecciona" options={GENEROS} value={vol.genero} onChange={(e) => setVol({ ...vol, genero: e.target.value })} required />
+              <Input label="Fecha de nacimiento" type="date" value={vol.fecha_nacimiento} onChange={(e) => setVol({ ...vol, fecha_nacimiento: e.target.value })} disabled={yaCompleto} required />
+              <Select label="Género" placeholder="Selecciona" options={GENEROS} value={vol.genero} onChange={(e) => setVol({ ...vol, genero: e.target.value })} disabled={yaCompleto} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Select label="Municipio" placeholder="Selecciona" options={muniOpts} value={vol.municipio_id} onChange={(e) => setVol({ ...vol, municipio_id: e.target.value })} required />
               <Select label="Disponibilidad" placeholder="Selecciona" options={DISPONIBILIDAD} value={vol.disponibilidad} onChange={(e) => setVol({ ...vol, disponibilidad: e.target.value })} required />
             </div>
+            {yaCompleto && (
+              <Alert tone="info">
+                Tu documento, fecha de nacimiento y género no se pueden editar aquí. Si necesitas
+                corregirlos, crea una solicitud en el Centro de ayuda.
+              </Alert>
+            )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input label="Dirección de residencia (opcional)" value={vol.direccion} onChange={(e) => setVol({ ...vol, direccion: e.target.value })} />
+              <Input label="Teléfono de contacto (opcional)" value={vol.telefono_contacto} onChange={(e) => setVol({ ...vol, telefono_contacto: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input label="Nivel educativo (opcional)" placeholder="Ej: Universitario" value={vol.nivel_educativo} onChange={(e) => setVol({ ...vol, nivel_educativo: e.target.value })} />
+              <Input label="Profesión u ocupación (opcional)" value={vol.profesion} onChange={(e) => setVol({ ...vol, profesion: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input label="Idiomas (opcional)" placeholder="Ej: Español, Inglés" value={vol.idiomas} onChange={(e) => setVol({ ...vol, idiomas: e.target.value })} />
+              <Select
+                label="Preferencia de modalidad (opcional)"
+                placeholder="Selecciona"
+                options={[
+                  { value: 'PRESENCIAL', label: 'Presencial' },
+                  { value: 'VIRTUAL', label: 'Virtual' },
+                  { value: 'HIBRIDA', label: 'Híbrida' },
+                  { value: 'INDIFERENTE', label: 'Indiferente' },
+                ]}
+                value={vol.preferencia_modalidad}
+                onChange={(e) => setVol({ ...vol, preferencia_modalidad: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input label="Contacto de emergencia (opcional)" value={vol.contacto_emergencia_nombre} onChange={(e) => setVol({ ...vol, contacto_emergencia_nombre: e.target.value })} />
+              <Input label="Teléfono de emergencia (opcional)" value={vol.contacto_emergencia_telefono} onChange={(e) => setVol({ ...vol, contacto_emergencia_telefono: e.target.value })} />
+            </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">Experiencia (opcional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">Descripción personal (opcional)</label>
+              <textarea
+                rows={2}
+                value={vol.descripcion}
+                onChange={(e) => setVol({ ...vol, descripcion: e.target.value })}
+                placeholder="Cuéntanos un poco sobre ti."
+                className="w-full rounded-xl border border-ink-200 bg-white/80 px-3.5 py-2.5 text-sm text-ink-900 shadow-sm focus:border-solar-400 focus:outline-none focus:ring-2 focus:ring-solar-400/70 dark:border-ink-700 dark:bg-ink-900/60 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">Experiencia en voluntariado (opcional)</label>
               <textarea
                 rows={3}
                 value={vol.experiencia}
@@ -280,6 +381,15 @@ export function CompletarPerfilPage() {
                 className="w-full rounded-xl border border-ink-200 bg-white/80 px-3.5 py-2.5 text-sm text-ink-900 shadow-sm focus:border-solar-400 focus:outline-none focus:ring-2 focus:ring-solar-400/70 dark:border-ink-700 dark:bg-ink-900/60 dark:text-white"
               />
             </div>
+            {yaCompleto && (
+              <Link
+                to="/app/intereses"
+                className="flex items-center justify-between rounded-xl border border-solar-300 bg-solar-50 px-4 py-3 text-sm font-medium text-solar-700 transition hover:bg-solar-100 dark:border-solar-500/40 dark:bg-solar-500/10 dark:text-solar-300"
+              >
+                <span>Gestionar mis intereses</span>
+                <span>→</span>
+              </Link>
+            )}
           </>
         )}
 
@@ -382,7 +492,7 @@ function VerificacionVoluntario({
           </div>
           <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
             {perfil.esta_verificado
-              ? 'Tu identidad ha sido verificada por el equipo de Solary.'
+              ? 'Tu identidad ha sido verificada por el equipo de Solari.'
               : perfil.documento_identidad
                 ? 'Recibimos tu documento. Un administrador lo revisará pronto.'
                 : 'Sube tu documento de identidad para obtener la insignia de verificado.'}
@@ -407,14 +517,13 @@ function VerificacionVoluntario({
             )}
           </button>
           {perfil.documento_identidad && (
-            <a
-              href={perfil.documento_identidad}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => abrirArchivoPrivado(perfil.documento_identidad as string)}
               className="mt-2 flex items-center justify-center gap-1 text-xs text-ink-400 hover:text-solar-500 sm:justify-start"
             >
               <FileText className="size-3.5" /> Ver documento subido
-            </a>
+            </button>
           )}
           <input
             ref={docRef}

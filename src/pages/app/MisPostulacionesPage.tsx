@@ -67,10 +67,18 @@ export function MisPostulacionesPage() {
     }
   }, [])
 
-  const retirar = async (pid: string) => {
+  const retirar = async (pid: string, estado: string) => {
+    if (
+      estado === 'ACEPTADO' &&
+      !window.confirm(
+        'Ya fuiste aceptado. Si te retiras se liberará tu cupo para otra persona. ¿Confirmas el retiro?',
+      )
+    ) {
+      return
+    }
     setAccion(pid)
     try {
-      await convocatoriaService.retirar(pid)
+      await convocatoriaService.retirar(pid, estado === 'ACEPTADO')
       cargar()
     } catch (err) {
       setError(parseApiError(err).message)
@@ -139,12 +147,12 @@ export function MisPostulacionesPage() {
                 {p.motivo_rechazo && p.estado === 'RECHAZADO' && (
                   <p className="mt-1 text-xs text-red-500">Motivo: {p.motivo_rechazo}</p>
                 )}
-                {(p.estado === 'PENDIENTE' || p.estado === 'ACEPTADO') && (
+                {['PENDIENTE', 'EN_REVISION', 'LISTA_ESPERA', 'ACEPTADO'].includes(p.estado) && (
                   <Button
                     variant="ghost"
                     size="sm"
                     loading={accion === p.id}
-                    onClick={() => retirar(p.id)}
+                    onClick={() => retirar(p.id, p.estado)}
                     className="mt-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
                   >
                     Retirar postulación

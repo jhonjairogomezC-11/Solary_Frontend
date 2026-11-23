@@ -1,15 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
+  Award,
   Bell,
   Building2,
   Compass,
+  Gift,
+  Repeat,
+  Sparkles,
+  Store,
   HeartHandshake,
+  History,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   Heart,
   Megaphone,
   Menu,
+  Trophy,
   UserCog,
   X,
 } from 'lucide-react'
@@ -26,11 +34,14 @@ interface NavItem {
   label: string
   icon: typeof Compass
   end?: boolean
+  /** Rutas hijas que también deben marcar este ítem como activo. */
+  also?: string[]
 }
 
 export function AppLayout() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [noLeidas, setNoLeidas] = useState(0)
 
@@ -59,7 +70,11 @@ export function AppLayout() {
         { to: '/app', label: 'Panel', icon: LayoutDashboard, end: true },
         { to: '/app/mis-convocatorias', label: 'Mis convocatorias', icon: Megaphone },
         { to: '/app/convocatorias', label: 'Explorar', icon: Compass },
+        { to: '/app/programaciones', label: 'Actividades recurrentes', icon: Repeat },
+        { to: '/app/ofrecimientos', label: 'Objetos y servicios', icon: Gift, also: ['/app/solicitudes-interes'] },
         { to: '/app/notificaciones', label: 'Notificaciones', icon: Bell },
+        { to: '/app/soporte', label: 'Ayuda', icon: LifeBuoy },
+        { to: '/app/perfil-publico', label: 'Perfil público', icon: Store },
         { to: '/app/perfil', label: 'Mi perfil', icon: UserCog },
       ]
     : [
@@ -67,7 +82,13 @@ export function AppLayout() {
         { to: '/app/convocatorias', label: 'Explorar', icon: Compass },
         { to: '/app/mis-postulaciones', label: 'Mis postulaciones', icon: HeartHandshake },
         { to: '/app/favoritos', label: 'Favoritos', icon: Heart },
+        { to: '/app/trayectoria', label: 'Mi trayectoria', icon: History },
+        { to: '/app/habilidades', label: 'Mis habilidades', icon: Sparkles },
+        { to: '/app/ofrecimientos', label: 'Objetos y servicios', icon: Gift, also: ['/app/solicitudes-interes'] },
+        { to: '/app/logros', label: 'Logros y XP', icon: Award },
+        { to: '/app/ranking', label: 'Ranking', icon: Trophy },
         { to: '/app/notificaciones', label: 'Notificaciones', icon: Bell },
+        { to: '/app/soporte', label: 'Ayuda', icon: LifeBuoy },
         { to: '/app/perfil', label: 'Mi perfil', icon: UserCog },
       ]
 
@@ -84,7 +105,7 @@ export function AppLayout() {
         </Link>
       </div>
       <nav className="flex-1 space-y-1 px-3">
-        {navItems.map(({ to, label, icon: Icon, end }) => (
+        {navItems.map(({ to, label, icon: Icon, end, also }) => (
           <NavLink
             key={to}
             to={to}
@@ -93,7 +114,7 @@ export function AppLayout() {
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition',
-                isActive
+                isActive || also?.some((p) => pathname.startsWith(p))
                   ? 'bg-gradient-to-r from-solar-500 to-solar-600 text-white shadow-glow'
                   : 'text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800',
               )

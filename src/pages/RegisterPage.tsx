@@ -57,7 +57,7 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Crea tu cuenta"
-      subtitle="Únete a Solary y empieza a generar impacto hoy."
+      subtitle="Únete a Solari y empieza a generar impacto hoy."
     >
       <div className="space-y-6">
         {infoMessage && <Alert tone="info">{infoMessage}</Alert>}

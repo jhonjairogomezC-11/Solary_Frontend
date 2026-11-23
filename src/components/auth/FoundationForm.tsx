@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Building2, Lock, Mail, User } from 'lucide-react'
 
@@ -23,8 +23,13 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<FForm>({ resolver: zodResolver(foundationSchema) })
+  } = useForm<FForm>({
+    resolver: zodResolver(foundationSchema),
+    defaultValues: { tipo_organizacion: 'FUNDACION', constituida_legalmente: true },
+  })
+  const constituida = useWatch({ control, name: 'constituida_legalmente' })
 
   const onSubmit = async (values: FForm) => {
     setServerError(null)
@@ -35,14 +40,16 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
       password_confirmation: values.password_confirmation,
       telefono: values.telefono || undefined,
       nombre_fundacion: values.nombre_fundacion,
-      nit: values.nit,
+      tipo_organizacion: values.tipo_organizacion,
+      constituida_legalmente: values.constituida_legalmente,
+      nit: values.constituida_legalmente ? values.nit || undefined : undefined,
       representante_legal: values.representante_legal,
       correo_institucional: values.correo_institucional || undefined,
       telefono_contacto: values.telefono_contacto,
       direccion: values.direccion,
       municipio_id: values.municipio_id,
       descripcion: values.descripcion,
-      documento_legal: values.documento_legal,
+      documento_legal: values.constituida_legalmente ? values.documento_legal || undefined : undefined,
       pagina_web: values.pagina_web || undefined,
     }
     try {
@@ -65,13 +72,31 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
         {...register('nombre_fundacion')}
       />
 
+      <Select
+        label="Tipo de organización"
+        options={[
+          { value: 'FUNDACION', label: 'Fundación' },
+          { value: 'REFUGIO', label: 'Refugio' },
+          { value: 'COLECTIVO', label: 'Colectivo' },
+          { value: 'INICIATIVA_CIUDADANA', label: 'Iniciativa ciudadana' },
+          { value: 'OTRA', label: 'Otra' },
+        ]}
+        {...register('tipo_organizacion')}
+      />
+      <Checkbox
+        label="Estamos legalmente constituidos (NIT y documento legal). Si no, puedes registrarte igual."
+        {...register('constituida_legalmente')}
+      />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input
-          label="NIT"
-          placeholder="900123456-7"
-          error={errors.nit?.message}
-          {...register('nit')}
-        />
+        {constituida && (
+          <Input
+            label="NIT"
+            placeholder="900123456-7"
+            error={errors.nit?.message}
+            {...register('nit')}
+          />
+        )}
         <Input
           label="Representante legal"
           icon={<User className="size-4.5" />}
@@ -152,13 +177,15 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
         {...register('direccion')}
       />
 
-      <Input
-        label="Documento legal (referencia)"
-        placeholder="Certificado de existencia / RUT"
-        hint="Referencia del documento que acredita a la fundación."
-        error={errors.documento_legal?.message}
-        {...register('documento_legal')}
-      />
+      {constituida && (
+        <Input
+          label="Documento legal (referencia)"
+          placeholder="Certificado de existencia / RUT"
+          hint="Referencia del documento que acredita a la organización."
+          error={errors.documento_legal?.message}
+          {...register('documento_legal')}
+        />
+      )}
 
       <Input
         label="Página web (opcional)"

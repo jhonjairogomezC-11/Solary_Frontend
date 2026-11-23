@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 type Theme = 'light' | 'dark'
-const KEY = 'solary.theme'
+const KEY = 'solari.theme'
 
 function getInitialTheme(): Theme {
   const stored = localStorage.getItem(KEY) as Theme | null

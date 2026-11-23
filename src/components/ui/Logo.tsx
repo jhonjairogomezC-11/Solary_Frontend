@@ -29,7 +29,7 @@ export function Logo({ className, showText = true, size = 36 }: LogoProps) {
       </span>
       {showText && (
         <span className="font-display text-xl font-extrabold tracking-tight text-ink-900 dark:text-white">
-          Solary
+          Solari
         </span>
       )}
     </div>

@@ -108,7 +108,7 @@ export function parseApiError(error: unknown): ApiError {
     const data = error.response?.data as ApiError | undefined
     if (data?.message) return data
     if (error.code === 'ERR_NETWORK') {
-      return { message: 'No se pudo conectar con el servidor. Verifica que Solary esté en línea.' }
+      return { message: 'No se pudo conectar con el servidor. Verifica que Solari esté en línea.' }
     }
   }
   return { message: 'Ocurrió un error inesperado. Inténtalo de nuevo.' }

@@ -46,7 +46,7 @@ export function AdminDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-ink-900 dark:text-white">Panel de administración</h1>
         <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-          Vista general del sistema Solary.
+          Vista general del sistema Solari.
         </p>
       </div>
 

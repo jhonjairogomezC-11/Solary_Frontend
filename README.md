@@ -1,6 +1,6 @@
-# Solary — Frontend web
+# Solari — Frontend web
 
-Interfaz web de **Solary**, la plataforma que conecta voluntarios y fundaciones.
+Interfaz web de **Solari**, la plataforma que conecta voluntarios y fundaciones.
 Esta fase cubre el módulo de **autenticación** (Fase 1 del backend): landing,
 registro de voluntarios y fundaciones, inicio de sesión local y con Google,
 recuperación/restablecimiento de contraseña y un panel base tras iniciar sesión.
@@ -20,8 +20,8 @@ frontend Vue existentes.
 ## Requisitos
 
 - Node.js 20+ (probado en Node 24)
-- El backend **Solary** corriendo en `http://localhost:8001`
-  (ver `Solary backend/INSTALACION.md`; en Windows se arranca con `python run.py`)
+- El backend **Solari** corriendo en `http://localhost:8001`
+  (ver `Solari backend/INSTALACION.md`; en Windows se arranca con `python run.py`)
 
 ## Puesta en marcha
 
