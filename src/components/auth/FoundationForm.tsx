@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { municipioOptions } from '@/lib/catalogs'
+import { useMunicipios } from '@/hooks/useMunicipios'
 import { foundationSchema, type FoundationForm as FForm } from '@/lib/validators'
 import type { RegisterFoundationPayload, TokenResponse } from '@/types/auth'
 import { authService } from '@/services/authService'
@@ -30,6 +30,7 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
     defaultValues: { tipo_organizacion: 'FUNDACION', constituida_legalmente: true },
   })
   const constituida = useWatch({ control, name: 'constituida_legalmente' })
+  const municipios = useMunicipios()
 
   const onSubmit = async (values: FForm) => {
     setServerError(null)
@@ -163,9 +164,12 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
         />
         <Select
           label="Municipio"
-          placeholder="Selecciona"
-          options={municipioOptions}
-          error={errors.municipio_id?.message}
+          placeholder={municipios.loading ? 'Cargando…' : 'Selecciona'}
+          options={municipios.options}
+          error={
+            errors.municipio_id?.message ??
+            (municipios.error ? 'No se pudieron cargar los municipios.' : undefined)
+          }
           {...register('municipio_id')}
         />
       </div>

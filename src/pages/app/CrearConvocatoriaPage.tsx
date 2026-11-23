@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ImagePlus, X } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, ImagePlus, Loader2, X } from 'lucide-react'
 
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
@@ -16,7 +16,7 @@ import {
   type HabilidadCat,
   type UnidadIntervalo,
 } from '@/types/alineacion'
-import type { AreaImpacto, ConvocatoriaCreate, Municipio } from '@/types/convocatoria'
+import type { AreaImpacto, Convocatoria, ConvocatoriaCreate, Municipio } from '@/types/convocatoria'
 
 const MAX_CICLO = 3
 const MAX_FOTOS = 8
@@ -29,6 +29,11 @@ const MODALIDAD_OPTS = [
 
 export function CrearConvocatoriaPage() {
   const navigate = useNavigate()
+  const { id: editId } = useParams<{ id: string }>()
+  const editando = Boolean(editId)
+  const [original, setOriginal] = useState<Convocatoria | null>(null)
+  const [cargando, setCargando] = useState(editando)
+  const [fotosActuales, setFotosActuales] = useState<{ id: string; ruta: string }[]>([])
   const [areas, setAreas] = useState<AreaImpacto[]>([])
   const [municipios, setMunicipios] = useState<Municipio[]>([])
   const [habilidades, setHabilidades] = useState<HabilidadCat[]>([])
@@ -93,6 +98,73 @@ export function CrearConvocatoriaPage() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    if (!editId) return
+    let active = true
+    convocatoriaService
+      .miConvocatoria(editId)
+      .then((c) => {
+        if (!active) return
+        const s = (v: string | number | null | undefined) => (v == null ? '' : String(v))
+        setOriginal(c)
+        setForm({
+          titulo: c.titulo,
+          descripcion: c.descripcion,
+          categoria_id: s(c.categoria_id),
+          modalidad: c.modalidad,
+          municipio_id: s(c.municipio_id),
+          direccion_exacta: s(c.direccion_exacta),
+          enlace_virtual: s(c.enlace_virtual),
+          fecha_inicio: c.fecha_inicio,
+          fecha_fin: c.fecha_fin,
+          hora_inicio: s(c.hora_inicio).slice(0, 5),
+          hora_fin: s(c.hora_fin).slice(0, 5),
+          cupo_maximo: s(c.cupo_maximo),
+          requisitos_adicionales: s(c.requisitos_adicionales),
+          contacto_nombre: s(c.contacto_nombre),
+          contacto_email: s(c.contacto_email),
+          contacto_telefono: s(c.contacto_telefono),
+          objetivo: s(c.objetivo),
+          impacto_esperado: s(c.impacto_esperado),
+          actividades_voluntario: s(c.actividades_voluntario),
+          perfil_beneficiarios: s(c.perfil_beneficiarios),
+          que_llevar: s(c.que_llevar),
+          recomendaciones: s(c.recomendaciones),
+          politica_cancelacion: s(c.politica_cancelacion),
+          nivel_experiencia: s(c.nivel_experiencia),
+          horas_reconocidas: s(c.horas_reconocidas ?? 0),
+          fecha_limite_postulacion: s(c.fecha_limite_postulacion),
+          dificultad: c.dificultad || 'FACIL',
+        })
+        setBene({
+          incluye_transporte: c.incluye_transporte,
+          incluye_alimentacion: c.incluye_alimentacion,
+          incluye_seguro: c.incluye_seguro,
+          otorga_certificado: c.otorga_certificado,
+          urgente: c.urgente,
+        })
+        setHabsSel(c.habilidades.map((h) => h.id))
+        setFotosActuales((c.imagenes ?? []).map((i) => ({ id: i.id, ruta: i.ruta })))
+      })
+      .catch((err) => active && setError(parseApiError(err).message))
+      .finally(() => active && setCargando(false))
+    return () => {
+      active = false
+    }
+  }, [editId])
+
+  const quitarFotoActual = async (imagenId: string) => {
+    if (!editId) return
+    try {
+      const c = await convocatoriaService.eliminarImagen(editId, imagenId)
+      setFotosActuales((c.imagenes ?? []).map((i) => ({ id: i.id, ruta: i.ruta })))
+    } catch (err) {
+      setError(parseApiError(err).message)
+    }
+  }
+
+  const cupoFotos = MAX_FOTOS - fotosActuales.length
+
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
   const requierePresencia = form.modalidad !== 'VIRTUAL'
@@ -154,6 +226,20 @@ export function CrearConvocatoriaPage() {
         return
       }
 
+      if (editId) {
+        if (!requierePresencia) {
+          payload.municipio_id = null as unknown as number
+          payload.direccion_exacta = null as unknown as string
+        }
+        await convocatoriaService.actualizar(editId, payload)
+        for (const foto of fotos) {
+          await convocatoriaService.subirImagen(editId, foto)
+        }
+        if (publicar) await convocatoriaService.publicar(editId)
+        navigate('/app/mis-convocatorias', { replace: true })
+        return
+      }
+
       const creada = await convocatoriaService.crear(payload)
       for (const foto of fotos) {
         await convocatoriaService.subirImagen(creada.id, foto)
@@ -179,13 +265,27 @@ export function CrearConvocatoriaPage() {
       </button>
 
       <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white">
-        Nueva convocatoria
+        {editando ? 'Editar convocatoria' : 'Nueva convocatoria'}
       </h1>
       <p className="mt-1 text-ink-500 dark:text-ink-400">
-        Publica una oportunidad de voluntariado para tu fundación.
+        {editando
+          ? 'Los cambios se verán de inmediato para los voluntarios.'
+          : 'Publica una oportunidad de voluntariado para tu fundación.'}
       </p>
+      {editando && original?.estado === 'PUBLICADA' && (original.postulaciones_total ?? 0) > 0 && (
+        <Alert tone="info" className="mt-4">
+          Esta convocatoria ya tiene {original.postulaciones_total} postulación(es). Si cambias la
+          fecha, el horario o el lugar, avisa a los voluntarios por mensaje.
+        </Alert>
+      )}
+      {cargando && (
+        <div className="flex justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-solar-500" />
+        </div>
+      )}
 
       <form
+        hidden={cargando}
         onSubmit={(e) => {
           e.preventDefault()
           submit(false)
@@ -305,14 +405,41 @@ export function CrearConvocatoriaPage() {
           <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
             Fotografías (opcional, hasta {MAX_FOTOS})
           </label>
+          {fotosActuales.length > 0 && (
+            <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {fotosActuales.map((f, i) => (
+                <div key={f.id} className="relative overflow-hidden rounded-xl border border-ink-200 dark:border-ink-700">
+                  <img src={f.ruta} alt="" className="h-24 w-full object-cover" />
+                  {i === 0 && (
+                    <span className="absolute bottom-1 left-1 rounded bg-solar-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      Portada
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    aria-label="Eliminar foto"
+                    onClick={() => quitarFotoActual(f.id)}
+                    className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-red-500 shadow hover:bg-white"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {previews.length > 0 && (
             <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {previews.map((src, i) => (
                 <div key={src} className="relative overflow-hidden rounded-xl border border-ink-200 dark:border-ink-700">
                   <img src={src} alt="" className="h-24 w-full object-cover" />
-                  {i === 0 && (
+                  {i === 0 && fotosActuales.length === 0 && (
                     <span className="absolute bottom-1 left-1 rounded bg-solar-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                       Portada
+                    </span>
+                  )}
+                  {fotosActuales.length > 0 && (
+                    <span className="absolute bottom-1 left-1 rounded bg-ink-900/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      Nueva
                     </span>
                   )}
                   <button
@@ -327,7 +454,7 @@ export function CrearConvocatoriaPage() {
               ))}
             </div>
           )}
-          {fotos.length < MAX_FOTOS && (
+          {fotos.length < cupoFotos && (
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink-300 bg-ink-50/60 px-4 py-5 text-sm font-semibold text-ink-700 transition hover:border-solar-400 hover:bg-solar-50 hover:text-solar-700 dark:border-ink-600 dark:bg-ink-800/40 dark:text-ink-200">
               <ImagePlus className="size-5" /> Agregar fotos (JPG, PNG o WEBP, máx. 5 MB)
               <input
@@ -337,7 +464,7 @@ export function CrearConvocatoriaPage() {
                 className="hidden"
                 onChange={(e) => {
                   const nuevas = Array.from(e.target.files ?? [])
-                  setFotos((fs) => [...fs, ...nuevas].slice(0, MAX_FOTOS))
+                  setFotos((fs) => [...fs, ...nuevas].slice(0, cupoFotos))
                   e.target.value = ''
                 }}
               />
@@ -357,7 +484,7 @@ export function CrearConvocatoriaPage() {
           <HabilidadesPicker catalogo={habilidades} value={habsSel} onChange={setHabsSel} />
         </div>
 
-        <div className="rounded-xl border border-ink-200/60 p-4 dark:border-ink-700">
+        <div hidden={editando} className="rounded-xl border border-ink-200/60 p-4 dark:border-ink-700">
           <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
             <input
               type="checkbox"
@@ -452,12 +579,20 @@ export function CrearConvocatoriaPage() {
         </details>
 
         <div className="flex flex-col gap-3 border-t border-ink-200/60 pt-5 sm:flex-row dark:border-ink-700">
-          <Button type="submit" variant="outline" size="lg" loading={saving} fullWidth>
-            Guardar borrador
-          </Button>
-          <Button type="button" size="lg" loading={saving} fullWidth onClick={() => submit(true)}>
-            Publicar ahora
-          </Button>
+          {editando && original?.estado !== 'BORRADOR' && original?.estado !== 'PENDIENTE_APROBACION' ? (
+            <Button type="submit" size="lg" loading={saving} fullWidth>
+              Guardar cambios
+            </Button>
+          ) : (
+            <>
+              <Button type="submit" variant="outline" size="lg" loading={saving} fullWidth>
+                {editando ? 'Guardar cambios' : 'Guardar borrador'}
+              </Button>
+              <Button type="button" size="lg" loading={saving} fullWidth onClick={() => submit(true)}>
+                {editando ? 'Guardar y publicar' : 'Publicar ahora'}
+              </Button>
+            </>
+          )}
         </div>
       </form>
     </div>

@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 
+import { DescargarCertificadoButton } from '@/components/certificados/DescargarCertificadoButton'
 import { Alert } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
 import type { BadgeTone } from '@/components/ui/badgeHelpers'
@@ -135,7 +136,12 @@ export function TrayectoriaPage() {
                     )}
                   </div>
                 </div>
-                <Badge tone={info.tone}>{info.label}</Badge>
+                <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                  {a.estado === 'ASISTIO' && a.otorga_certificado && (
+                    <DescargarCertificadoButton postulacionId={a.postulacion_id} />
+                  )}
+                  <Badge tone={info.tone}>{info.label}</Badge>
+                </div>
               </div>
             )
           })}

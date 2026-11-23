@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Loader2, Megaphone, Plus } from 'lucide-react'
+import { ImageIcon, Loader2, Megaphone, Pencil, Plus } from 'lucide-react'
 
 import { Alert } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
@@ -100,8 +100,25 @@ export function MisConvocatoriasPage() {
             return (
               <div
                 key={c.id}
-                className="flex flex-col gap-3 rounded-2xl border border-ink-200/60 bg-white/70 p-4 backdrop-blur sm:flex-row sm:items-center dark:border-ink-700/60 dark:bg-ink-900/50"
+                className="flex flex-col gap-4 rounded-2xl border border-ink-200/60 bg-white/70 p-4 backdrop-blur sm:flex-row sm:items-center dark:border-ink-700/60 dark:bg-ink-900/50"
               >
+                <Link
+                  to={`/app/convocatorias/${c.id}`}
+                  className="relative h-28 w-full shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-solar-400 to-orange-600 sm:h-24 sm:w-36"
+                >
+                  {c.imagen ? (
+                    <img src={c.imagen} alt="" className="size-full object-cover" />
+                  ) : (
+                    <span className="flex size-full items-center justify-center">
+                      <ImageIcon className="size-7 text-white/60" />
+                    </span>
+                  )}
+                  {(c.imagenes?.length ?? 0) > 1 && (
+                    <span className="absolute bottom-1 right-1 rounded bg-ink-900/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      {c.imagenes?.length} fotos
+                    </span>
+                  )}
+                </Link>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone={est.tone}>{est.label}</Badge>
@@ -114,14 +131,27 @@ export function MisConvocatoriasPage() {
                     {c.titulo}
                   </Link>
                   <p className="text-sm text-ink-400">
-                    {formatDate(c.fecha_inicio)} · {c.cupo_maximo} cupos
+                    {formatDate(c.fecha_inicio)} · {c.cupo_maximo} cupos ·{' '}
+                    {c.postulaciones_total ?? 0} postulación(es)
                   </p>
+                  {(c.postulaciones_pendientes ?? 0) > 0 && (
+                    <p className="mt-1 text-xs font-semibold text-solar-700 dark:text-solar-300">
+                      {c.postulaciones_pendientes} por revisar
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <Link to={`/app/convocatorias/${c.id}/postulaciones`}>
                     <Button variant="outline" size="sm">Postulaciones</Button>
                   </Link>
+                  {c.estado !== 'CANCELADA' && (
+                    <Link to={`/app/convocatorias/${c.id}/editar`}>
+                      <Button variant="outline" size="sm">
+                        <Pencil className="size-3.5" /> Editar
+                      </Button>
+                    </Link>
+                  )}
                   {(c.estado === 'BORRADOR' || c.estado === 'PENDIENTE_APROBACION') && (
                     <Button size="sm" loading={accion === c.id} onClick={() => publicar(c.id)}>
                       Publicar

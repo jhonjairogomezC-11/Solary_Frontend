@@ -158,6 +158,7 @@ export default function App() {
                 <Route path="perfil" element={<CompletarPerfilPage />} />
                 <Route path="convocatorias" element={<ExplorarPage />} />
                 <Route path="convocatorias/nueva" element={<CrearConvocatoriaPage />} />
+                <Route path="convocatorias/:id/editar" element={<CrearConvocatoriaPage />} />
                 <Route path="convocatorias/:id" element={<ConvocatoriaDetallePage />} />
                 <Route path="convocatorias/:id/postulaciones" element={<PostulacionesPage />} />
                 <Route path="mis-convocatorias" element={<MisConvocatoriasPage />} />

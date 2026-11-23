@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HeartHandshake, Loader2 } from 'lucide-react'
 
+import { DescargarCertificadoButton } from '@/components/certificados/DescargarCertificadoButton'
 import { Alert } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
 import { estadoPostulacionBadge } from '@/components/ui/badgeHelpers'
@@ -146,6 +147,9 @@ export function MisPostulacionesPage() {
                 )}
                 {p.motivo_rechazo && p.estado === 'RECHAZADO' && (
                   <p className="mt-1 text-xs text-red-500">Motivo: {p.motivo_rechazo}</p>
+                )}
+                {p.estado === 'ASISTIO' && p.convocatoria?.otorga_certificado && (
+                  <DescargarCertificadoButton postulacionId={p.id} className="mt-2" />
                 )}
                 {['PENDIENTE', 'EN_REVISION', 'LISTA_ESPERA', 'ACEPTADO'].includes(p.estado) && (
                   <Button

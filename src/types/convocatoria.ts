@@ -89,6 +89,8 @@ export interface Convocatoria {
   municipio_id: number | null
   habilidades: Habilidad[]
   imagenes?: { id: string; ruta: string; orden: number }[]
+  postulaciones_total?: number | null
+  postulaciones_pendientes?: number | null
   programacion_id?: string | null
   coincidencia?: number | null
   habilidades_coinciden?: number[]

@@ -1,4 +1,4 @@
-﻿import { api } from '@/lib/apiClient'
+import { api } from '@/lib/apiClient'
 import type {
   AreaImpacto,
   Convocatoria,
@@ -24,7 +24,7 @@ export interface ConvocatoriaFiltros {
 }
 
 export const convocatoriaService = {
-  // â”€â”€â”€ PÃºblico â”€â”€â”€
+  // ─── Público ───
   async listar(filtros: ConvocatoriaFiltros = {}): Promise<Paginated<Convocatoria>> {
     const { data } = await api.get<Paginated<Convocatoria>>('/publicaciones', { params: filtros })
     return data
@@ -35,7 +35,7 @@ export const convocatoriaService = {
     return data
   },
 
-  // â”€â”€â”€ FundaciÃ³n â”€â”€â”€
+  // ─── Fundación ───
   async crear(payload: ConvocatoriaCreate): Promise<Convocatoria> {
     const { data } = await api.post<Convocatoria>('/publicaciones', payload)
     return data
@@ -43,6 +43,12 @@ export const convocatoriaService = {
 
   async actualizar(id: string, payload: Partial<ConvocatoriaCreate>): Promise<Convocatoria> {
     const { data } = await api.put<Convocatoria>(`/publicaciones/${id}`, payload)
+    return data
+  },
+
+  /** Detalle de una convocatoria propia en cualquier estado (para editarla). */
+  async miConvocatoria(id: string): Promise<Convocatoria> {
+    const { data } = await api.get<Convocatoria>(`/mis-publicaciones/${id}`)
     return data
   },
 
@@ -75,7 +81,7 @@ export const convocatoriaService = {
     return data
   },
 
-  // â”€â”€â”€ Postulaciones â”€â”€â”€
+  // ─── Postulaciones ───
   async postular(publicacion_id: string, mensaje_voluntario?: string): Promise<Postulacion> {
     const { data } = await api.post<Postulacion>('/postulaciones', {
       publicacion_id,
@@ -137,7 +143,7 @@ export const convocatoriaService = {
     return data
   },
 
-  // â”€â”€â”€ CatÃ¡logos â”€â”€â”€
+  // ─── Catálogos ───
   async departamentos(): Promise<Departamento[]> {
     const { data } = await api.get<Departamento[]>('/catalogos/departamentos')
     return data
@@ -160,7 +166,7 @@ export const convocatoriaService = {
     return data
   },
 
-  // â”€â”€â”€ Notificaciones â”€â”€â”€
+  // ─── Notificaciones ───
   async notificaciones(page = 1): Promise<Paginated<Notificacion>> {
     const { data } = await api.get<Paginated<Notificacion>>('/notificaciones', {
       params: { page },
@@ -181,7 +187,7 @@ export const convocatoriaService = {
     await api.post('/notificaciones/marcar-todas-leidas')
   },
 
-  // â”€â”€â”€ Perfil â”€â”€â”€
+  // ─── Perfil ───
   async estadoPerfil(): Promise<{ rol: string; perfil_completo: boolean }> {
     const { data } = await api.get<{ rol: string; perfil_completo: boolean }>('/perfil/estado')
     return data
@@ -266,7 +272,7 @@ export const convocatoriaService = {
     return data.url
   },
 
-  // â”€â”€â”€ Favoritos â”€â”€â”€
+  // ─── Favoritos ───
   async favoritosIds(): Promise<string[]> {
     const { data } = await api.get<string[]>('/favoritos/ids')
     return data

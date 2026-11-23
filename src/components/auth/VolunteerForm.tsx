@@ -7,12 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import {
-  disponibilidadOptions,
-  generoOptions,
-  municipioOptions,
-  tipoDocumentoOptions,
-} from '@/lib/catalogs'
+import { disponibilidadOptions, generoOptions, tipoDocumentoOptions } from '@/lib/catalogs'
+import { useMunicipios } from '@/hooks/useMunicipios'
 import { volunteerSchema, type VolunteerForm as VForm } from '@/lib/validators'
 import type { RegisterVolunteerPayload, TokenResponse } from '@/types/auth'
 import { authService } from '@/services/authService'
@@ -30,6 +26,7 @@ export function VolunteerForm({ onSuccess, serverError, setServerError }: Props)
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<VForm>({ resolver: zodResolver(volunteerSchema) })
+  const municipios = useMunicipios()
 
   const onSubmit = async (values: VForm) => {
     setServerError(null)
@@ -131,9 +128,12 @@ export function VolunteerForm({ onSuccess, serverError, setServerError }: Props)
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Select
           label="Municipio"
-          placeholder="Selecciona"
-          options={municipioOptions}
-          error={errors.municipio_id?.message}
+          placeholder={municipios.loading ? 'Cargando…' : 'Selecciona'}
+          options={municipios.options}
+          error={
+            errors.municipio_id?.message ??
+            (municipios.error ? 'No se pudieron cargar los municipios.' : undefined)
+          }
           {...register('municipio_id')}
         />
         <Select
