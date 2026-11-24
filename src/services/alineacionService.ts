@@ -54,6 +54,19 @@ export const programacionService = {
     const { data } = await api.post<Programacion>(`/programaciones/${id}/finalizar`)
     return data
   },
+  /** Agrega una foto que se copia a cada convocatoria generada (máx. 8). */
+  async subirImagen(id: string, file: File): Promise<Programacion> {
+    const form = new FormData()
+    form.append('archivo', file)
+    const { data } = await api.post<Programacion>(`/programaciones/${id}/imagenes`, form)
+    return data
+  },
+  async eliminarImagen(id: string, ruta: string): Promise<Programacion> {
+    const { data } = await api.delete<Programacion>(`/programaciones/${id}/imagenes`, {
+      params: { ruta },
+    })
+    return data
+  },
 }
 
 export const ofrecimientoService = {

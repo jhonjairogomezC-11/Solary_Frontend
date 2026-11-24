@@ -30,6 +30,9 @@ export interface VoluntarioPostulante {
   habilidades: string[]
   habilidades_coinciden: string[]
   coincidencia: number
+  /** Menor de edad y estado de la autorización del acudiente (null = sin enviar). */
+  menor_de_edad?: boolean
+  autorizacion_estado?: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | null
 }
 
 export interface Postulante {
@@ -97,6 +100,8 @@ export interface Programacion {
   ciclo_generadas: number
   proxima_fecha: string
   fecha_pausa: string | null
+  /** URLs de las fotos que se copian a cada convocatoria generada. */
+  imagenes?: string[]
   convocatorias: { id: string; fecha_inicio: string; fecha_fin: string; estado: string }[]
 }
 

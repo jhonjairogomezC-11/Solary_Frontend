@@ -25,6 +25,16 @@ export interface TokenResponse {
   expires_in: number
 }
 
+/** Respuesta de login cuando la cuenta tiene verificación en dos pasos activa. */
+export interface MfaRequeridoResponse {
+  mfa_requerido: true
+  mfa_token: string
+  expires_in: number
+  message: string
+}
+
+export type LoginResult = TokenResponse | MfaRequeridoResponse
+
 export interface ApiError {
   message: string
   errors?: Record<string, string[]>

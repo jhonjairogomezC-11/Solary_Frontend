@@ -14,6 +14,33 @@ const password = z
 
 const email = z.string().min(1, 'El correo es obligatorio.').email('Correo no válido.')
 
+/** Edad mínima para registrarse en Solari (igual que app/core/edad.py del backend). */
+export const EDAD_MINIMA = 16
+/** De 16 a 17 años se exige la autorización del acudiente. */
+export const MAYORIA_EDAD = 18
+export const MSG_EDAD_MINIMA = `Debes tener al menos ${EDAD_MINIMA} años para registrarte en Solari.`
+
+/** Años cumplidos a partir de 'AAAA-MM-DD' (fecha local). */
+export function edadDesde(fechaIso: string, hoy: Date = new Date()): number {
+  const [y, m, d] = fechaIso.split('-').map(Number)
+  let edad = hoy.getFullYear() - y
+  if (hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) edad -= 1
+  return edad
+}
+
+/** Fecha máxima permitida en el selector: hoy menos EDAD_MINIMA años ('AAAA-MM-DD'). */
+export function fechaMaximaNacimiento(hoy: Date = new Date()): string {
+  const y = hoy.getFullYear() - EDAD_MINIMA
+  const m = String(hoy.getMonth() + 1).padStart(2, '0')
+  const d = String(hoy.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const fechaNacimiento = z
+  .string()
+  .min(1, 'Selecciona tu fecha de nacimiento.')
+  .refine((v) => /^\d{4}-\d{2}-\d{2}$/.test(v) && edadDesde(v) >= EDAD_MINIMA, MSG_EDAD_MINIMA)
+
 export const loginSchema = z.object({
   email,
   password: z.string().min(1, 'La contraseña es obligatoria.'),
@@ -37,7 +64,7 @@ export const volunteerSchema = z
     ...baseRegister,
     tipo_documento: z.enum(['CC', 'TI', 'CE', 'PASAPORTE']),
     numero_documento: z.string().min(4, 'Documento no válido.').max(30),
-    fecha_nacimiento: z.string().min(1, 'Selecciona tu fecha de nacimiento.'),
+    fecha_nacimiento: fechaNacimiento,
     genero: z.enum(['MASCULINO', 'FEMENINO', 'OTRO']),
     municipio_id: z.coerce.number().int().positive('Selecciona un municipio.'),
     disponibilidad: z.enum(['ENTRE_SEMANA', 'FINES_DE_SEMANA', 'FLEXIBLE']),

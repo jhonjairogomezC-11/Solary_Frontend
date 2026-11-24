@@ -11,6 +11,7 @@ import {
   Megaphone,
   Menu,
   ShieldCheck,
+  UserCheck,
   Users,
   X,
 } from 'lucide-react'
@@ -24,11 +25,13 @@ const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
   { to: '/admin/voluntarios', label: 'Verificar voluntarios', icon: BadgeCheck },
+  { to: '/admin/autorizaciones', label: 'Autorizaciones menores', icon: UserCheck },
   { to: '/admin/fundaciones', label: 'Fundaciones', icon: Building2 },
   { to: '/admin/convocatorias', label: 'Convocatorias', icon: Megaphone },
   { to: '/admin/postulaciones', label: 'Postulaciones', icon: CalendarCheck },
   { to: '/admin/catalogos', label: 'Catálogos', icon: ListTree },
   { to: '/admin/gestion', label: 'Gestión y auditoría', icon: ClipboardList },
+  { to: '/admin/seguridad', label: 'Seguridad', icon: ShieldCheck },
 ]
 
 export function AdminLayout() {

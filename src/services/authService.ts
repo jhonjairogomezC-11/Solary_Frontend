@@ -1,15 +1,31 @@
 import { api } from '@/lib/apiClient'
 import type {
   LoginPayload,
+  LoginResult,
+  MfaRequeridoResponse,
   RegisterFoundationPayload,
   RegisterVolunteerPayload,
   TokenResponse,
   Usuario,
 } from '@/types/auth'
 
+/** Indica si el login quedó pendiente del segundo paso (verificación en dos pasos). */
+export function esMfaRequerido(data: LoginResult): data is MfaRequeridoResponse {
+  return 'mfa_requerido' in data && data.mfa_requerido === true
+}
+
 export const authService = {
-  async login(payload: LoginPayload): Promise<TokenResponse> {
-    const { data } = await api.post<TokenResponse>('/auth/login', payload)
+  async login(payload: LoginPayload): Promise<LoginResult> {
+    const { data } = await api.post<LoginResult>('/auth/login', payload)
+    return data
+  },
+
+  /** Segundo paso: código de 6 dígitos de la app autenticadora o código de respaldo. */
+  async loginMfa(mfaToken: string, codigo: string): Promise<TokenResponse> {
+    const { data } = await api.post<TokenResponse>('/auth/login/mfa', {
+      mfa_token: mfaToken,
+      codigo,
+    })
     return data
   },
 
@@ -53,8 +69,8 @@ export const authService = {
     return data
   },
 
-  async loginWithGoogle(idToken: string, rol?: 'VOLUNTARIO' | 'FUNDACION'): Promise<TokenResponse> {
-    const { data } = await api.post<TokenResponse>('/auth/google', {
+  async loginWithGoogle(idToken: string, rol?: 'VOLUNTARIO' | 'FUNDACION'): Promise<LoginResult> {
+    const { data } = await api.post<LoginResult>('/auth/google', {
       id_token: idToken,
       ...(rol ? { rol } : {}),
     })

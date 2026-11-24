@@ -212,7 +212,7 @@ export function CrearConvocatoriaPage() {
 
       if (recurrente) {
         const { fecha_inicio, hora_inicio, hora_fin, cupo_maximo, ...plantilla } = payload
-        await programacionService.crear({
+        const prog = await programacionService.crear({
           unidad_intervalo: rec.unidad as UnidadIntervalo,
           intervalo: Number(rec.intervalo),
           fecha_inicio,
@@ -222,6 +222,10 @@ export function CrearConvocatoriaPage() {
           cupo_maximo,
           plantilla: plantilla as unknown as Record<string, unknown>,
         })
+        // Las fotos quedan en la programación y se copian a cada convocatoria generada.
+        for (const foto of fotos) {
+          await programacionService.subirImagen(prog.id, foto)
+        }
         navigate('/app/programaciones', { replace: true })
         return
       }
@@ -472,7 +476,7 @@ export function CrearConvocatoriaPage() {
           )}
           {recurrente && fotos.length > 0 && (
             <p className="mt-2 text-xs text-ink-500">
-              Las actividades recurrentes aún no copian las fotos; agrégalas luego a cada convocatoria generada.
+              Las fotos se copiarán a cada convocatoria que genere la actividad recurrente.
             </p>
           )}
         </div>

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, Clock, Eye, History, Loader2, Star, X } from 'lucide-react'
+import { ArrowLeft, Check, Clock, Eye, History, Loader2, MessageCircle, Star, X } from 'lucide-react'
 
+import { ChatPostulacion } from '@/components/mensajes/ChatPostulacion'
+import { ESTADOS_CON_CHAT } from '@/services/mensajeService'
 import { Alert } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
 import { estadoPostulacionBadge } from '@/components/ui/badgeHelpers'
@@ -37,6 +39,7 @@ export function PostulacionesPage() {
   const [accion, setAccion] = useState<string | null>(null)
   const [calificando, setCalificando] = useState<string | null>(null)
   const [nota, setNota] = useState(5)
+  const [chatAbierto, setChatAbierto] = useState<string | null>(null)
   const [historial, setHistorial] = useState<{ id: string; items: HistorialPostulacion[] } | null>(
     null,
   )
@@ -163,6 +166,12 @@ export function PostulacionesPage() {
                         {v.coincidencia}% compatible
                       </Badge>
                     )}
+                    {v?.menor_de_edad && (
+                      <Badge tone={v.autorizacion_estado === 'APROBADA' ? 'blue' : 'amber'}>
+                        Menor de edad · autorización{' '}
+                        {v.autorizacion_estado === 'APROBADA' ? 'aprobada' : 'pendiente'}
+                      </Badge>
+                    )}
                   </div>
                   <span className="text-xs text-ink-400">{formatDate(p.fecha_postulacion)}</span>
                 </div>
@@ -278,6 +287,20 @@ export function PostulacionesPage() {
 
                 {p.calificacion != null && (
                   <p className="mt-2 text-xs text-ink-500">Calificación: {p.calificacion}/5</p>
+                )}
+
+                {ESTADOS_CON_CHAT.includes(p.estado) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setChatAbierto(chatAbierto === p.id ? null : p.id)}
+                    className="mt-3"
+                  >
+                    <MessageCircle className="size-4" /> Mensajes
+                  </Button>
+                )}
+                {chatAbierto === p.id && (
+                  <ChatPostulacion postulacionId={p.id} onClose={() => setChatAbierto(null)} />
                 )}
 
                 <button

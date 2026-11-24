@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Award,
   Bell,
   Building2,
+  CalendarDays,
   Compass,
   Gift,
   Repeat,
@@ -18,6 +19,7 @@ import {
   Megaphone,
   Menu,
   Trophy,
+  ShieldCheck,
   UserCog,
   X,
 } from 'lucide-react'
@@ -26,7 +28,7 @@ import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/auth/AuthContext'
 import { FavoritosProvider } from '@/hooks/useFavoritos'
-import { convocatoriaService } from '@/services/convocatoriaService'
+import { useNotificacionesEnVivo } from '@/hooks/useNotificacionesEnVivo'
 import { cn } from '@/lib/utils'
 
 interface NavItem {
@@ -43,44 +45,29 @@ export function AppLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [noLeidas, setNoLeidas] = useState(0)
+  const noLeidas = useNotificacionesEnVivo()
 
   const esFundacion = usuario?.rol === 'FUNDACION'
-
-  useEffect(() => {
-    let active = true
-    convocatoriaService
-      .noLeidas()
-      .then((n) => active && setNoLeidas(n))
-      .catch(() => {})
-    const id = setInterval(() => {
-      convocatoriaService
-        .noLeidas()
-        .then((n) => active && setNoLeidas(n))
-        .catch(() => {})
-    }, 30000)
-    return () => {
-      active = false
-      clearInterval(id)
-    }
-  }, [])
 
   const navItems: NavItem[] = esFundacion
     ? [
         { to: '/app', label: 'Panel', icon: LayoutDashboard, end: true },
         { to: '/app/mis-convocatorias', label: 'Mis convocatorias', icon: Megaphone },
         { to: '/app/convocatorias', label: 'Explorar', icon: Compass },
+        { to: '/app/calendario', label: 'Calendario', icon: CalendarDays },
         { to: '/app/programaciones', label: 'Actividades recurrentes', icon: Repeat },
         { to: '/app/ofrecimientos', label: 'Objetos y servicios', icon: Gift, also: ['/app/solicitudes-interes'] },
         { to: '/app/notificaciones', label: 'Notificaciones', icon: Bell },
         { to: '/app/soporte', label: 'Ayuda', icon: LifeBuoy },
         { to: '/app/perfil-publico', label: 'Perfil público', icon: Store },
+        { to: '/app/seguridad', label: 'Seguridad', icon: ShieldCheck },
         { to: '/app/perfil', label: 'Mi perfil', icon: UserCog },
       ]
     : [
         { to: '/app', label: 'Panel', icon: LayoutDashboard, end: true },
         { to: '/app/convocatorias', label: 'Explorar', icon: Compass },
         { to: '/app/mis-postulaciones', label: 'Mis postulaciones', icon: HeartHandshake },
+        { to: '/app/calendario', label: 'Calendario', icon: CalendarDays },
         { to: '/app/favoritos', label: 'Favoritos', icon: Heart },
         { to: '/app/trayectoria', label: 'Mi trayectoria', icon: History },
         { to: '/app/habilidades', label: 'Mis habilidades', icon: Sparkles },
@@ -89,6 +76,7 @@ export function AppLayout() {
         { to: '/app/ranking', label: 'Ranking', icon: Trophy },
         { to: '/app/notificaciones', label: 'Notificaciones', icon: Bell },
         { to: '/app/soporte', label: 'Ayuda', icon: LifeBuoy },
+        { to: '/app/seguridad', label: 'Seguridad', icon: ShieldCheck },
         { to: '/app/perfil', label: 'Mi perfil', icon: UserCog },
       ]
 

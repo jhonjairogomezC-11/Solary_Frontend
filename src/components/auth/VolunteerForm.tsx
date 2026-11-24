@@ -9,7 +9,12 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { disponibilidadOptions, generoOptions, tipoDocumentoOptions } from '@/lib/catalogs'
 import { useMunicipios } from '@/hooks/useMunicipios'
-import { volunteerSchema, type VolunteerForm as VForm } from '@/lib/validators'
+import {
+  EDAD_MINIMA,
+  fechaMaximaNacimiento,
+  volunteerSchema,
+  type VolunteerForm as VForm,
+} from '@/lib/validators'
 import type { RegisterVolunteerPayload, TokenResponse } from '@/types/auth'
 import { authService } from '@/services/authService'
 import { parseApiError } from '@/lib/apiClient'
@@ -113,6 +118,8 @@ export function VolunteerForm({ onSuccess, serverError, setServerError }: Props)
         <Input
           label="Fecha de nacimiento"
           type="date"
+          max={fechaMaximaNacimiento()}
+          hint={`Edad mínima: ${EDAD_MINIMA} años. Si tienes 16 o 17, tu acudiente debe autorizarte.`}
           error={errors.fecha_nacimiento?.message}
           {...register('fecha_nacimiento')}
         />

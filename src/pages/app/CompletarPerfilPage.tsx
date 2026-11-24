@@ -11,6 +11,7 @@ import {
   UserCog,
 } from 'lucide-react'
 
+import { AutorizacionAcudiente } from '@/components/perfil/AutorizacionAcudiente'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -18,6 +19,7 @@ import { Select } from '@/components/ui/Select'
 import { useAuth } from '@/auth/AuthContext'
 import { parseApiError } from '@/lib/apiClient'
 import { abrirArchivoPrivado } from '@/lib/archivos'
+import { EDAD_MINIMA, MSG_EDAD_MINIMA, edadDesde, fechaMaximaNacimiento } from '@/lib/validators'
 import { convocatoriaService } from '@/services/convocatoriaService'
 import type { Municipio, PerfilFundacion, PerfilVoluntario } from '@/types/convocatoria'
 
@@ -148,6 +150,10 @@ export function CompletarPerfilPage() {
   const guardar = async () => {
     setError(null)
     setOk(null)
+    if (!esFundacion && !yaCompleto && vol.fecha_nacimiento && edadDesde(vol.fecha_nacimiento) < EDAD_MINIMA) {
+      setError(MSG_EDAD_MINIMA)
+      return
+    }
     setSaving(true)
     try {
       if (esFundacion) {
@@ -240,6 +246,9 @@ export function CompletarPerfilPage() {
         />
       )}
 
+      {/* Autorización del acudiente (solo se muestra a menores de edad) */}
+      {!esFundacion && perfilVol && <AutorizacionAcudiente />}
+
       {!yaCompleto && (
         <Alert tone="info" className="mb-6">
           Este paso es necesario porque tu cuenta aún no tiene el perfil completo (por ejemplo, si
@@ -321,7 +330,16 @@ export function CompletarPerfilPage() {
               <Input label="Número de documento" value={vol.numero_documento} onChange={(e) => setVol({ ...vol, numero_documento: e.target.value })} disabled={yaCompleto} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input label="Fecha de nacimiento" type="date" value={vol.fecha_nacimiento} onChange={(e) => setVol({ ...vol, fecha_nacimiento: e.target.value })} disabled={yaCompleto} required />
+              <Input
+                label="Fecha de nacimiento"
+                type="date"
+                max={fechaMaximaNacimiento()}
+                hint={yaCompleto ? undefined : `Edad mínima: ${EDAD_MINIMA} años. Con 16 o 17 se necesita la autorización del acudiente.`}
+                value={vol.fecha_nacimiento}
+                onChange={(e) => setVol({ ...vol, fecha_nacimiento: e.target.value })}
+                disabled={yaCompleto}
+                required
+              />
               <Select label="Género" placeholder="Selecciona" options={GENEROS} value={vol.genero} onChange={(e) => setVol({ ...vol, genero: e.target.value })} disabled={yaCompleto} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

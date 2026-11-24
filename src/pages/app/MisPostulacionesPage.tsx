@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { HeartHandshake, Loader2 } from 'lucide-react'
+import { HeartHandshake, Loader2, MessageCircle } from 'lucide-react'
 
 import { DescargarCertificadoButton } from '@/components/certificados/DescargarCertificadoButton'
+import { ChatPostulacion } from '@/components/mensajes/ChatPostulacion'
+import { ESTADOS_CON_CHAT } from '@/services/mensajeService'
 import { Alert } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
 import { estadoPostulacionBadge } from '@/components/ui/badgeHelpers'
@@ -21,6 +23,7 @@ export function MisPostulacionesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [accion, setAccion] = useState<string | null>(null)
+  const [chatAbierto, setChatAbierto] = useState<string | null>(null)
 
   const cargar = () => {
     setLoading(true)
@@ -161,6 +164,19 @@ export function MisPostulacionesPage() {
                   >
                     Retirar postulación
                   </Button>
+                )}
+                {ESTADOS_CON_CHAT.includes(p.estado) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setChatAbierto(chatAbierto === p.id ? null : p.id)}
+                    className="mt-2 ml-2"
+                  >
+                    <MessageCircle className="size-4" /> Mensajes
+                  </Button>
+                )}
+                {chatAbierto === p.id && (
+                  <ChatPostulacion postulacionId={p.id} onClose={() => setChatAbierto(null)} />
                 )}
               </div>
             )

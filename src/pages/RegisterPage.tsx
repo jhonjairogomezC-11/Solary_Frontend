@@ -11,7 +11,7 @@ import { Alert } from '@/components/ui/Alert'
 import { useAuth } from '@/auth/AuthContext'
 import { isGoogleEnabled } from '@/lib/config'
 import { parseApiError } from '@/lib/apiClient'
-import { authService } from '@/services/authService'
+import { authService, esMfaRequerido } from '@/services/authService'
 import type { TokenResponse } from '@/types/auth'
 
 export function RegisterPage() {
@@ -40,6 +40,11 @@ export function RegisterPage() {
       // Enviamos el rol elegido: así el backend crea la cuenta nueva con el tipo
       // correcto. Si la cuenta ya existe, el backend ignora el rol y hace login.
       const data = await authService.loginWithGoogle(idToken, role)
+      if (esMfaRequerido(data)) {
+        // Cuenta existente con verificación en dos pasos: el segundo paso vive en /login.
+        navigate('/login', { replace: true, state: { mfaToken: data.mfa_token } })
+        return
+      }
       handleSuccess(data)
     } catch (err) {
       const parsed = parseApiError(err)

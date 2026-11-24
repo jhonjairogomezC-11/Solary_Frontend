@@ -81,6 +81,12 @@ const HabilidadesPage = lazy(() =>
 const ProgramacionesPage = lazy(() =>
   import('@/pages/app/ProgramacionesPage').then((m) => ({ default: m.ProgramacionesPage })),
 )
+const SeguridadPage = lazy(() =>
+  import('@/pages/app/SeguridadPage').then((m) => ({ default: m.SeguridadPage })),
+)
+const CalendarioPage = lazy(() =>
+  import('@/pages/app/CalendarioPage').then((m) => ({ default: m.CalendarioPage })),
+)
 const OfrecimientosPage = lazy(() =>
   import('@/pages/app/OfrecimientosPage').then((m) => ({ default: m.OfrecimientosPage })),
 )
@@ -118,6 +124,11 @@ const AdminPostulacionesPage = lazy(() =>
 const AdminVoluntariosPage = lazy(() =>
   import('@/pages/admin/AdminVoluntariosPage').then((m) => ({
     default: m.AdminVoluntariosPage,
+  })),
+)
+const AdminAutorizacionesPage = lazy(() =>
+  import('@/pages/admin/AdminAutorizacionesPage').then((m) => ({
+    default: m.AdminAutorizacionesPage,
   })),
 )
 const AdminCatalogosPage = lazy(() =>
@@ -171,6 +182,8 @@ export default function App() {
                 <Route path="soporte" element={<SoportePage />} />
                 <Route path="habilidades" element={<HabilidadesPage />} />
                 <Route path="programaciones" element={<ProgramacionesPage />} />
+                <Route path="calendario" element={<CalendarioPage />} />
+                <Route path="seguridad" element={<SeguridadPage />} />
                 <Route path="ofrecimientos" element={<OfrecimientosPage />} />
                 <Route path="solicitudes-interes" element={<SolicitudesInteresPage />} />
                 <Route path="organizaciones/:id" element={<OrganizacionPublicaPage />} />
@@ -185,11 +198,13 @@ export default function App() {
                 <Route index element={<AdminDashboardPage />} />
                 <Route path="usuarios" element={<AdminUsuariosPage />} />
                 <Route path="voluntarios" element={<AdminVoluntariosPage />} />
+                <Route path="autorizaciones" element={<AdminAutorizacionesPage />} />
                 <Route path="fundaciones" element={<AdminFundacionesPage />} />
                 <Route path="convocatorias" element={<AdminConvocatoriasPage />} />
                 <Route path="postulaciones" element={<AdminPostulacionesPage />} />
                 <Route path="catalogos" element={<AdminCatalogosPage />} />
                 <Route path="gestion" element={<AdminGestionPage />} />
+                <Route path="seguridad" element={<SeguridadPage />} />
               </Route>
             </Route>
 
