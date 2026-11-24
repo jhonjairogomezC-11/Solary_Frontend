@@ -8,6 +8,9 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { useMunicipios } from '@/hooks/useMunicipios'
+import { resumenErrores } from '@/lib/formErrors'
+import { ACEPTACIONES_REGISTRO } from '@/lib/legal'
+import { TextoAceptacion } from '@/components/legal/TextoAceptacion'
 import { foundationSchema, type FoundationForm as FForm } from '@/lib/validators'
 import type { RegisterFoundationPayload, TokenResponse } from '@/types/auth'
 import { authService } from '@/services/authService'
@@ -52,6 +55,7 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
       descripcion: values.descripcion,
       documento_legal: values.constituida_legalmente ? values.documento_legal || undefined : undefined,
       pagina_web: values.pagina_web || undefined,
+      aceptaciones: ACEPTACIONES_REGISTRO,
     }
     try {
       const data = await authService.registerFoundation(payload)
@@ -62,8 +66,19 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      {serverError && <Alert tone="error">{serverError}</Alert>}
+    <form
+      onSubmit={handleSubmit(onSubmit, (errs) => {
+        setServerError(resumenErrores(errs))
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      })}
+      className="space-y-4"
+      noValidate
+    >
+      {serverError && (
+        <Alert tone="error" className="whitespace-pre-line">
+          {serverError}
+        </Alert>
+      )}
 
       <Input
         label="Nombre de la fundación"
@@ -214,15 +229,7 @@ export function FoundationForm({ onSuccess, serverError, setServerError }: Props
       </div>
 
       <Checkbox
-        label={
-          <>
-            Acepto los{' '}
-            <a href="#" className="font-medium text-solar-600 hover:underline dark:text-solar-400">
-              términos y condiciones
-            </a>{' '}
-            y la política de tratamiento de datos.
-          </>
-        }
+        label={<TextoAceptacion />}
         error={errors.acepta_terminos?.message}
         {...register('acepta_terminos')}
       />

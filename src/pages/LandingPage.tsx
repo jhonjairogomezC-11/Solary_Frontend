@@ -167,7 +167,11 @@ export function LandingPage() {
       </section>
 
       <footer className="relative z-10 border-t border-ink-200/60 py-8 text-center text-sm text-ink-400 dark:border-ink-800">
-        © {new Date().getFullYear()} Solari. Hecho con propósito.
+        <p>© {new Date().getFullYear()} Solari. Hecho con propósito.</p>
+        <p className="mt-2 flex justify-center gap-4">
+          <Link to="/terminos" className="hover:text-solar-600 hover:underline">Términos y condiciones</Link>
+          <Link to="/privacidad" className="hover:text-solar-600 hover:underline">Tratamiento de datos</Link>
+        </p>
       </footer>
     </div>
   )

@@ -130,6 +130,11 @@ function TicketsTab() {
       .then(setTickets)
       .catch((err) => setError(parseApiError(err).message))
       .finally(() => setLoading(false))
+    // Si llegamos desde una notificación (?ticket=<id>), abre ese ticket.
+    const ticketId = new URLSearchParams(window.location.search).get('ticket')
+    if (ticketId) {
+      voluntarioService.detalleTicket(ticketId).then(setAbierto).catch(() => {})
+    }
   }, [])
 
   if (abierto) {

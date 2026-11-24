@@ -9,8 +9,29 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { useAuth } from '@/auth/AuthContext'
 import { parseApiError } from '@/lib/apiClient'
-import { ofrecimientoService } from '@/services/alineacionService'
-import type { CategoriasOfrecimiento, Ofrecimiento, OfrecimientoCreate } from '@/types/alineacion'
+import { habilidadService, ofrecimientoService } from '@/services/alineacionService'
+import { convocatoriaService } from '@/services/convocatoriaService'
+import type {
+  CategoriasOfrecimiento,
+  HabilidadCat,
+  Ofrecimiento,
+  OfrecimientoCreate,
+} from '@/types/alineacion'
+import type { Municipio } from '@/types/convocatoria'
+
+const ETIQUETAS: Record<string, string> = {
+  NUEVO: 'Nuevo',
+  COMO_NUEVO: 'Como nuevo',
+  USADO_BUEN_ESTADO: 'Usado en buen estado',
+  USADO: 'Usado',
+  RECOGER_EN_LUGAR: 'Recoger en el lugar',
+  ENTREGA_POR_VOLUNTARIO: 'Entrega el voluntario',
+  A_CONVENIR: 'A convenir',
+  PRESENCIAL: 'Presencial',
+  REMOTO: 'Remoto',
+}
+const opciones = (vals: string[] | undefined) =>
+  (vals ?? []).map((v) => ({ value: v, label: ETIQUETAS[v] ?? v }))
 
 const inicial = {
   tipo: 'OBJETO',
@@ -19,6 +40,10 @@ const inicial = {
   categoria: '',
   cantidad_total: '1',
   condiciones: '',
+  estado_producto: '',
+  modalidad_entrega: '',
+  municipio_id: '',
+  habilidades: [] as number[],
 }
 
 export function OfrecimientosPage() {
@@ -37,6 +62,8 @@ export function OfrecimientosPage() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [cantidades, setCantidades] = useState<Record<string, string>>({})
+  const [municipios, setMunicipios] = useState<Municipio[]>([])
+  const [habilidadesCat, setHabilidadesCat] = useState<HabilidadCat[]>([])
 
   const cargar = useCallback(async () => {
     try {
@@ -57,6 +84,14 @@ export function OfrecimientosPage() {
     ofrecimientoService
       .categorias()
       .then((c) => active && setCats(c))
+      .catch(() => {})
+    convocatoriaService
+      .municipios()
+      .then((m) => active && setMunicipios(m))
+      .catch(() => {})
+    habilidadService
+      .catalogo()
+      .then((h) => active && setHabilidadesCat(h))
       .catch(() => {})
     return () => {
       active = false
@@ -81,6 +116,10 @@ export function OfrecimientosPage() {
 
   const crear = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (form.tipo === 'SERVICIO' && form.habilidades.length === 0) {
+      setError('Elige al menos una habilidad para el servicio.')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
@@ -89,7 +128,11 @@ export function OfrecimientosPage() {
         titulo: form.titulo,
         descripcion: form.descripcion,
         categoria: form.categoria,
-        ...(form.tipo === 'OBJETO' ? { cantidad_total: Number(form.cantidad_total) } : {}),
+        modalidad_entrega: form.modalidad_entrega,
+        ...(form.tipo === 'OBJETO'
+          ? { cantidad_total: Number(form.cantidad_total), estado_producto: form.estado_producto }
+          : { habilidades: form.habilidades }),
+        ...(form.municipio_id ? { municipio_id: Number(form.municipio_id) } : {}),
         ...(form.condiciones ? { condiciones: form.condiciones } : {}),
       }
       await ofrecimientoService.crear(payload)
@@ -124,6 +167,8 @@ export function OfrecimientosPage() {
   }
 
   const meInteresa = async (o: Ofrecimiento) => {
+    setError(null)
+    setOk(null)
     try {
       await ofrecimientoService.meInteresa(o.id, Number(cantidades[o.id] ?? 1))
       setOk('Solicitud enviada. Puedes coordinar con el voluntario en “Solicitudes”.')
@@ -152,11 +197,11 @@ export function OfrecimientosPage() {
 
       <div className="mt-4 flex gap-2">
         {esVoluntario && (
-          <Button size="sm" variant={tab === 'mios' ? 'primary' : 'outline'} onClick={() => { setLoading(true); setTab('mios') }}>
+          <Button size="sm" variant={tab === 'mios' ? 'primary' : 'outline'} onClick={() => { if (tab !== 'mios') { setLoading(true); setTab('mios') } }}>
             Mis publicaciones
           </Button>
         )}
-        <Button size="sm" variant={tab === 'explorar' ? 'primary' : 'outline'} onClick={() => { setLoading(true); setTab('explorar') }}>
+        <Button size="sm" variant={tab === 'explorar' ? 'primary' : 'outline'} onClick={() => { if (tab !== 'explorar') { setLoading(true); setTab('explorar') } }}>
           Explorar
         </Button>
       </div>
@@ -187,7 +232,9 @@ export function OfrecimientosPage() {
                     { value: 'SERVICIO', label: 'Servicio' },
                   ]}
                   value={form.tipo}
-                  onChange={(e) => setForm({ ...form, tipo: e.target.value, categoria: '' })}
+                  onChange={(e) =>
+                    setForm({ ...form, tipo: e.target.value, categoria: '', modalidad_entrega: '', habilidades: [] })
+                  }
                 />
                 <Select
                   label="Categoría"
@@ -209,8 +256,76 @@ export function OfrecimientosPage() {
                   required
                 />
               </div>
-              {form.tipo === 'OBJETO' && (
-                <Input label="Cantidad" type="number" min={1} value={form.cantidad_total} onChange={(e) => setForm({ ...form, cantidad_total: e.target.value })} />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {form.tipo === 'OBJETO' && (
+                  <>
+                    <Input label="Cantidad" type="number" min={1} value={form.cantidad_total} onChange={(e) => setForm({ ...form, cantidad_total: e.target.value })} />
+                    <Select
+                      label="Estado del objeto"
+                      placeholder="Selecciona"
+                      options={opciones(cats?.estados_producto)}
+                      value={form.estado_producto}
+                      onChange={(e) => setForm({ ...form, estado_producto: e.target.value })}
+                      required
+                    />
+                  </>
+                )}
+                <Select
+                  label={form.tipo === 'OBJETO' ? 'Forma de entrega' : 'Modalidad del servicio'}
+                  placeholder="Selecciona"
+                  options={opciones(form.tipo === 'OBJETO' ? cats?.modalidades_entrega : cats?.modalidades_servicio)}
+                  value={form.modalidad_entrega}
+                  onChange={(e) => setForm({ ...form, modalidad_entrega: e.target.value })}
+                  required
+                />
+                <Select
+                  label={
+                    form.tipo === 'OBJETO' || form.modalidad_entrega === 'PRESENCIAL'
+                      ? 'Municipio'
+                      : 'Municipio (opcional)'
+                  }
+                  placeholder="Selecciona"
+                  options={municipios.map((m) => ({ value: m.id, label: m.nombre }))}
+                  value={form.municipio_id}
+                  onChange={(e) => setForm({ ...form, municipio_id: e.target.value })}
+                  required={form.tipo === 'OBJETO' || form.modalidad_entrega === 'PRESENCIAL'}
+                />
+              </div>
+              {form.tipo === 'SERVICIO' && (
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-ink-700 dark:text-ink-200">
+                    Habilidades (elige al menos una, máximo 10)
+                  </p>
+                  <div className="flex max-h-40 flex-wrap gap-2 overflow-y-auto">
+                    {habilidadesCat.map((h) => {
+                      const activa = form.habilidades.includes(h.id)
+                      return (
+                        <button
+                          key={h.id}
+                          type="button"
+                          onClick={() =>
+                            setForm({
+                              ...form,
+                              habilidades: activa
+                                ? form.habilidades.filter((x) => x !== h.id)
+                                : form.habilidades.length < 10
+                                  ? [...form.habilidades, h.id]
+                                  : form.habilidades,
+                            })
+                          }
+                          className={
+                            'rounded-full border px-3 py-1 text-xs font-medium transition ' +
+                            (activa
+                              ? 'border-solar-500 bg-solar-500 text-white'
+                              : 'border-ink-200 text-ink-600 hover:border-solar-400 dark:border-ink-700 dark:text-ink-300')
+                          }
+                        >
+                          {h.nombre}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               )}
               <Input label="Condiciones (opcional)" value={form.condiciones} onChange={(e) => setForm({ ...form, condiciones: e.target.value })} />
               <div className="flex gap-2">
@@ -276,6 +391,10 @@ export function OfrecimientosPage() {
 
               {esFundacion && !o.es_mio && o.estado === 'DISPONIBLE' && (
                 <div className="mt-3 flex items-end gap-2">
+                  {o.ya_solicitado ? (
+                    <Badge tone="gray">Solicitud enviada</Badge>
+                  ) : (
+                    <>
                   {o.tipo === 'OBJETO' && (
                     <input
                       type="number"
@@ -287,6 +406,8 @@ export function OfrecimientosPage() {
                     />
                   )}
                   <Button size="sm" onClick={() => meInteresa(o)}>Me interesa</Button>
+                    </>
+                  )}
                 </div>
               )}
             </div>

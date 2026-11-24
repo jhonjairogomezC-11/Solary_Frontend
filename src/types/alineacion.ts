@@ -131,6 +131,7 @@ export interface Ofrecimiento {
   habilidades: { id: number; nombre: string }[]
   es_mio: boolean
   solicitudes_pendientes: number | null
+  ya_solicitado: boolean
 }
 
 export interface OfrecimientoCreate {

@@ -1,3 +1,5 @@
+import type { AceptacionLegal } from '@/lib/legal'
+
 /** Tipos del dominio de autenticación, espejo del contrato del backend Solari. */
 
 export type Rol = 'VOLUNTARIO' | 'FUNDACION' | 'ADMIN'
@@ -58,6 +60,7 @@ export interface RegisterVolunteerPayload {
   municipio_id: number
   disponibilidad: Disponibilidad
   experiencia?: string
+  aceptaciones?: AceptacionLegal[]
 }
 
 export interface RegisterFoundationPayload {
@@ -78,4 +81,5 @@ export interface RegisterFoundationPayload {
   descripcion: string
   documento_legal?: string
   pagina_web?: string
+  aceptaciones?: AceptacionLegal[]
 }

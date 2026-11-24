@@ -82,8 +82,24 @@ export function ExplorarPage() {
 
       {/* Filtros */}
       <div className="mb-6 rounded-2xl border border-ink-200/60 bg-white/70 p-4 backdrop-blur dark:border-ink-700/60 dark:bg-ink-900/50">
-        <div className="flex items-center gap-2 text-sm font-semibold text-ink-700 dark:text-ink-200">
-          <SlidersHorizontal className="size-4 text-solar-500" /> Filtros
+        <div className="flex items-center justify-between gap-2 text-sm font-semibold text-ink-700 dark:text-ink-200">
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal className="size-4 text-solar-500" /> Filtros
+          </span>
+          {(buscar || categoria || modalidad || municipio) && (
+            <button
+              type="button"
+              onClick={() => {
+                setBuscar('')
+                setCategoria('')
+                setModalidad('')
+                setMunicipio('')
+              }}
+              className="text-xs font-medium text-solar-600 hover:underline"
+            >
+              Limpiar filtros
+            </button>
+          )}
         </div>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Input

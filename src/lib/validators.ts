@@ -47,8 +47,36 @@ export const loginSchema = z.object({
 })
 export type LoginForm = z.infer<typeof loginSchema>
 
+/** Parte de un nombre: letras (con tildes), espacios, apóstrofes y guiones. */
+const REGEX_NOMBRE = /^[\p{L}][\p{L}' -]*$/u
+const parteNombre = (msgRequerido: string) =>
+  z
+    .string()
+    .trim()
+    .min(2, msgRequerido)
+    .max(30, 'Máximo 30 caracteres.')
+    .regex(REGEX_NOMBRE, 'Solo letras, sin números ni símbolos.')
+const parteNombreOpcional = z
+  .string()
+  .trim()
+  .max(30, 'Máximo 30 caracteres.')
+  .refine((v) => v === '' || REGEX_NOMBRE.test(v), 'Solo letras, sin números ni símbolos.')
+  .optional()
+
+/** Une las partes del nombre en el `nombre` completo que espera el backend. */
+export function componerNombre(p: {
+  primer_nombre: string
+  segundo_nombre?: string
+  primer_apellido: string
+  segundo_apellido?: string
+}): string {
+  return [p.primer_nombre, p.segundo_nombre, p.primer_apellido, p.segundo_apellido]
+    .map((s) => (s ?? '').trim())
+    .filter(Boolean)
+    .join(' ')
+}
+
 const baseRegister = {
-  nombre: z.string().min(2, 'Ingresa tu nombre completo.').max(120),
   email,
   password,
   password_confirmation: z.string(),
@@ -62,6 +90,10 @@ const baseRegister = {
 export const volunteerSchema = z
   .object({
     ...baseRegister,
+    primer_nombre: parteNombre('Ingresa tu primer nombre.'),
+    segundo_nombre: parteNombreOpcional,
+    primer_apellido: parteNombre('Ingresa tu primer apellido.'),
+    segundo_apellido: parteNombreOpcional,
     tipo_documento: z.enum(['CC', 'TI', 'CE', 'PASAPORTE']),
     numero_documento: z.string().min(4, 'Documento no válido.').max(30),
     fecha_nacimiento: fechaNacimiento,
@@ -82,6 +114,7 @@ export type VolunteerForm = z.infer<typeof volunteerSchema>
 export const foundationSchema = z
   .object({
     ...baseRegister,
+    nombre: z.string().min(2, 'Ingresa tu nombre completo.').max(120),
     nombre_fundacion: z.string().min(2, 'Nombre de la fundación requerido.').max(150),
     tipo_organizacion: z.string().min(1),
     constituida_legalmente: z.boolean(),

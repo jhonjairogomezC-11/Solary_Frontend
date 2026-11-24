@@ -126,6 +126,7 @@ export interface Notificacion {
   mensaje: string
   objeto_tipo: string | null
   objeto_id: string | null
+  publicacion_id?: string | null
   leida: boolean
   fecha_lectura: string | null
   fecha_creacion: string

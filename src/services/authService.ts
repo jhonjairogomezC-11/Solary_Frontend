@@ -55,6 +55,11 @@ export const authService = {
     return data
   },
 
+  async resendVerification(): Promise<{ message: string }> {
+    const { data } = await api.post<{ message: string }>('/auth/resend-verification')
+    return data
+  },
+
   async forgotPassword(email: string): Promise<{ message: string }> {
     const { data } = await api.post<{ message: string }>('/auth/forgot-password', { email })
     return data

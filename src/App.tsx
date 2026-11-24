@@ -4,8 +4,10 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '@/auth/AuthContext'
 import { AdminRoute, ProtectedRoute, PublicOnlyRoute } from '@/components/routing/RouteGuards'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { TourProvider } from '@/components/tour/Tour'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Logo } from '@/components/ui/Logo'
+import { DOC_PRIVACIDAD, DOC_TERMINOS } from '@/lib/legal'
 
 const LandingPage = lazy(() =>
   import('@/pages/LandingPage').then((m) => ({ default: m.LandingPage })),
@@ -22,6 +24,15 @@ const ResetPasswordPage = lazy(() =>
 )
 const VerifyEmailPage = lazy(() =>
   import('@/pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })),
+)
+const LegalPage = lazy(() =>
+  import('@/pages/LegalPage').then((m) => ({ default: m.LegalPage })),
+)
+const VerifyPendingPage = lazy(() =>
+  import('@/pages/VerifyPendingPage').then((m) => ({ default: m.VerifyPendingPage })),
+)
+const OnboardingPerfilPage = lazy(() =>
+  import('@/pages/OnboardingPerfilPage').then((m) => ({ default: m.OnboardingPerfilPage })),
 )
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
@@ -152,7 +163,10 @@ export default function App() {
         <Suspense fallback={<SuspenseFallback />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+            <Route path="/terminos" element={<LegalPage codigo={DOC_TERMINOS} />} />
+            <Route path="/privacidad" element={<LegalPage codigo={DOC_PRIVACIDAD} />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
             {/* Rutas solo para invitados */}
             <Route element={<PublicOnlyRoute />}>
@@ -164,7 +178,16 @@ export default function App() {
 
             {/* App protegida con layout */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/app" element={<AppLayout />}>
+              <Route path="/verifica-tu-correo" element={<VerifyPendingPage />} />
+              <Route path="/completar-perfil" element={<OnboardingPerfilPage />} />
+              <Route
+                path="/app"
+                element={
+                  <TourProvider>
+                    <AppLayout />
+                  </TourProvider>
+                }
+              >
                 <Route index element={<DashboardHome />} />
                 <Route path="perfil" element={<CompletarPerfilPage />} />
                 <Route path="convocatorias" element={<ExplorarPage />} />

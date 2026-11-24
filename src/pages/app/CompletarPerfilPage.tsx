@@ -273,7 +273,7 @@ export function CompletarPerfilPage() {
 
         {esFundacion ? (
           <>
-            <Input label="Nombre de la fundación" value={fund.nombre_fundacion} onChange={(e) => setFund({ ...fund, nombre_fundacion: e.target.value })} required />
+            <Input label="Nombre de la fundación" value={fund.nombre_fundacion} onChange={(e) => setFund({ ...fund, nombre_fundacion: e.target.value })} disabled={yaCompleto} required />
             <Select
               label="Tipo de organización"
               options={[
@@ -285,20 +285,22 @@ export function CompletarPerfilPage() {
               ]}
               value={fund.tipo_organizacion}
               onChange={(e) => setFund({ ...fund, tipo_organizacion: e.target.value })}
+              disabled={yaCompleto}
             />
             <label className="flex items-center gap-2 text-sm text-ink-700 dark:text-ink-200">
               <input
                 type="checkbox"
                 checked={fund.constituida_legalmente}
                 onChange={(e) => setFund({ ...fund, constituida_legalmente: e.target.checked })}
+                disabled={yaCompleto}
               />
               Estamos legalmente constituidos (NIT y documento legal). Si no, puedes participar igual.
             </label>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {fund.constituida_legalmente && (
-                <Input label="NIT" placeholder="900123456-7" value={fund.nit} onChange={(e) => setFund({ ...fund, nit: e.target.value })} required />
+                <Input label="NIT" placeholder="900123456-7" value={fund.nit} onChange={(e) => setFund({ ...fund, nit: e.target.value })} disabled={yaCompleto} required />
               )}
-              <Input label="Representante legal" value={fund.representante_legal} onChange={(e) => setFund({ ...fund, representante_legal: e.target.value })} required />
+              <Input label="Representante legal" value={fund.representante_legal} onChange={(e) => setFund({ ...fund, representante_legal: e.target.value })} disabled={yaCompleto} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input label="Teléfono de contacto" value={fund.telefono_contacto} onChange={(e) => setFund({ ...fund, telefono_contacto: e.target.value })} required />
@@ -309,7 +311,14 @@ export function CompletarPerfilPage() {
               <Input label="Dirección" value={fund.direccion} onChange={(e) => setFund({ ...fund, direccion: e.target.value })} required />
             </div>
             {fund.constituida_legalmente && (
-              <Input label="Documento legal (referencia)" placeholder="Certificado / RUT" value={fund.documento_legal} onChange={(e) => setFund({ ...fund, documento_legal: e.target.value })} required />
+              <Input label="Documento legal (referencia)" placeholder="Certificado / RUT" value={fund.documento_legal} onChange={(e) => setFund({ ...fund, documento_legal: e.target.value })} disabled={yaCompleto} required />
+            )}
+            {yaCompleto && (
+              <Alert tone="info">
+                El nombre, tipo de organización, NIT, representante legal y documento legal no se
+                pueden editar aquí. Si necesitas corregirlos, crea una solicitud en el Centro de
+                ayuda.
+              </Alert>
             )}
             <Input label="Página web (opcional)" placeholder="https://..." value={fund.pagina_web} onChange={(e) => setFund({ ...fund, pagina_web: e.target.value })} />
             <div>
@@ -353,8 +362,8 @@ export function CompletarPerfilPage() {
               </Alert>
             )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input label="Dirección de residencia (opcional)" value={vol.direccion} onChange={(e) => setVol({ ...vol, direccion: e.target.value })} />
-              <Input label="Teléfono de contacto (opcional)" value={vol.telefono_contacto} onChange={(e) => setVol({ ...vol, telefono_contacto: e.target.value })} />
+              <Input label="Dirección de residencia" value={vol.direccion} onChange={(e) => setVol({ ...vol, direccion: e.target.value })} required />
+              <Input label="Teléfono de contacto" value={vol.telefono_contacto} onChange={(e) => setVol({ ...vol, telefono_contacto: e.target.value })} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input label="Nivel educativo (opcional)" placeholder="Ej: Universitario" value={vol.nivel_educativo} onChange={(e) => setVol({ ...vol, nivel_educativo: e.target.value })} />
@@ -376,8 +385,8 @@ export function CompletarPerfilPage() {
               />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input label="Contacto de emergencia (opcional)" value={vol.contacto_emergencia_nombre} onChange={(e) => setVol({ ...vol, contacto_emergencia_nombre: e.target.value })} />
-              <Input label="Teléfono de emergencia (opcional)" value={vol.contacto_emergencia_telefono} onChange={(e) => setVol({ ...vol, contacto_emergencia_telefono: e.target.value })} />
+              <Input label="Contacto de emergencia (nombre)" value={vol.contacto_emergencia_nombre} onChange={(e) => setVol({ ...vol, contacto_emergencia_nombre: e.target.value })} required />
+              <Input label="Teléfono de emergencia" value={vol.contacto_emergencia_telefono} onChange={(e) => setVol({ ...vol, contacto_emergencia_telefono: e.target.value })} required />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">Descripción personal (opcional)</label>

@@ -64,7 +64,10 @@ describe('resetSchema', () => {
 })
 
 const voluntarioValido = {
-  nombre: 'Ana Pérez',
+  primer_nombre: 'Ana',
+  segundo_nombre: '',
+  primer_apellido: 'Pérez',
+  segundo_apellido: '',
   email: 'ana@solari.co',
   password: PASSWORD,
   password_confirmation: PASSWORD,
@@ -113,8 +116,8 @@ describe('volunteerSchema', () => {
   })
 
   it('valida nombre y documento mínimos', () => {
-    const r = volunteerSchema.safeParse({ ...voluntarioValido, nombre: 'A', numero_documento: '12' })
-    expect(errorAt(r, 'nombre')).toBe('Ingresa tu nombre completo.')
+    const r = volunteerSchema.safeParse({ ...voluntarioValido, primer_nombre: 'A', numero_documento: '12' })
+    expect(errorAt(r, 'primer_nombre')).toBe('Ingresa tu primer nombre.')
     expect(errorAt(r, 'numero_documento')).toBe('Documento no válido.')
   })
 

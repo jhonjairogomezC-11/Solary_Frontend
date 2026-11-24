@@ -9,9 +9,10 @@ import { Badge } from '@/components/ui/Badge'
 import { estadoPostulacionBadge } from '@/components/ui/badgeHelpers'
 import { Button } from '@/components/ui/Button'
 import { parseApiError } from '@/lib/apiClient'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatTime } from '@/lib/utils'
 import { convocatoriaService } from '@/services/convocatoriaService'
 import type { HistorialPostulacion, Postulante, ResumenCupos } from '@/types/alineacion'
+import type { Convocatoria } from '@/types/convocatoria'
 
 type Decision = 'ACEPTADO' | 'RECHAZADO' | 'EN_REVISION' | 'LISTA_ESPERA'
 
@@ -39,7 +40,13 @@ export function PostulacionesPage() {
   const [accion, setAccion] = useState<string | null>(null)
   const [calificando, setCalificando] = useState<string | null>(null)
   const [nota, setNota] = useState(5)
-  const [chatAbierto, setChatAbierto] = useState<string | null>(null)
+  const [actividad, setActividad] = useState<Convocatoria | null>(null)
+  // Hora de carga de la página (el render debe ser puro; el backend valida de nuevo).
+  const [ahora] = useState(() => Date.now())
+  // Si llegamos desde una notificación (?chat=<id>), el chat se abre solo.
+  const [chatAbierto, setChatAbierto] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('chat'),
+  )
   const [historial, setHistorial] = useState<{ id: string; items: HistorialPostulacion[] } | null>(
     null,
   )
@@ -61,6 +68,10 @@ export function PostulacionesPage() {
     let active = true
     if (!id) return
     convocatoriaService
+      .detalle(id)
+      .then((c) => active && setActividad(c))
+      .catch(() => {})
+    convocatoriaService
       .postulacionesDe(id)
       .then((res) => {
         if (!active) return
@@ -73,6 +84,15 @@ export function PostulacionesPage() {
       active = false
     }
   }, [id])
+
+  // La actividad termina en fecha_fin a la hora_fin (o al acabar ese día). Hora local de Bogotá.
+  const terminada = (() => {
+    if (!actividad) return false
+    if (actividad.estado === 'FINALIZADA' || actividad.estado === 'COMPLETADA') return true
+    const hora = actividad.hora_fin ?? '23:59:59'
+    const fin = new Date(`${actividad.fecha_fin}T${hora.length === 5 ? `${hora}:00` : hora}-05:00`)
+    return ahora >= fin.getTime()
+  })()
 
   const ejecutar = async (pid: string, fn: () => Promise<unknown>) => {
     setAccion(pid)
@@ -234,7 +254,14 @@ export function PostulacionesPage() {
                   </div>
                 )}
 
-                {p.estado === 'ACEPTADO' && (
+                {p.estado === 'ACEPTADO' && !terminada && (
+                  <p className="mt-3 rounded-xl border border-dashed border-ink-200 px-3 py-2 text-xs text-ink-500 dark:border-ink-700 dark:text-ink-400">
+                    Podrás registrar la asistencia y calificar al voluntario cuando termine la
+                    actividad{actividad ? ` (${formatDate(actividad.fecha_fin)}${formatTime(actividad.hora_fin) ? ` · ${formatTime(actividad.hora_fin)}` : ''})` : ''}.
+                  </p>
+                )}
+
+                {p.estado === 'ACEPTADO' && terminada && (
                   <div className="mt-3 rounded-xl border border-ink-200/60 p-3 dark:border-ink-700/60">
                     {calificando === p.id ? (
                       <div className="space-y-2">

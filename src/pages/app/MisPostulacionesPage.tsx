@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { HeartHandshake, Loader2, MessageCircle } from 'lucide-react'
+import {
+  Award,
+  CalendarDays,
+  Clock,
+  HeartHandshake,
+  Loader2,
+  MapPin,
+  MessageCircle,
+} from 'lucide-react'
 
 import { DescargarCertificadoButton } from '@/components/certificados/DescargarCertificadoButton'
 import { ChatPostulacion } from '@/components/mensajes/ChatPostulacion'
 import { ESTADOS_CON_CHAT } from '@/services/mensajeService'
 import { Alert } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
-import { estadoPostulacionBadge } from '@/components/ui/badgeHelpers'
+import { estadoPostulacionBadge, modalidadBadge } from '@/components/ui/badgeHelpers'
 import { Button } from '@/components/ui/Button'
 import { parseApiError } from '@/lib/apiClient'
-import { formatDate } from '@/lib/utils'
+import { cn, formatDate, formatTime } from '@/lib/utils'
 import { convocatoriaService } from '@/services/convocatoriaService'
 import type { Convocatoria, Postulacion } from '@/types/convocatoria'
 
@@ -18,12 +26,37 @@ interface PostConv extends Postulacion {
   convocatoria?: Convocatoria
 }
 
+const ESTADOS_ACTIVOS = ['PENDIENTE', 'EN_REVISION', 'LISTA_ESPERA', 'ACEPTADO']
+
+type Filtro = 'activas' | 'historial' | 'todas'
+
+/** Franja de color lateral según el estado de la postulación. */
+const FRANJA: Record<string, string> = {
+  PENDIENTE: 'before:bg-amber-400',
+  EN_REVISION: 'before:bg-purple-400',
+  LISTA_ESPERA: 'before:bg-amber-400',
+  ACEPTADO: 'before:bg-emerald-500',
+  ASISTIO: 'before:bg-sky-500',
+  RECHAZADO: 'before:bg-red-400',
+  NO_ASISTIO: 'before:bg-red-400',
+  CANCELADO_FUNDACION: 'before:bg-red-400',
+  RETIRADO: 'before:bg-ink-300',
+}
+
+function rangoFechas(inicio: string, fin: string): string {
+  return inicio === fin ? formatDate(inicio) : `${formatDate(inicio)} – ${formatDate(fin)}`
+}
+
 export function MisPostulacionesPage() {
   const [items, setItems] = useState<PostConv[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [accion, setAccion] = useState<string | null>(null)
-  const [chatAbierto, setChatAbierto] = useState<string | null>(null)
+  const [filtro, setFiltro] = useState<Filtro>('activas')
+  // Si llegamos desde una notificación (?chat=<id>), el chat se abre solo.
+  const [chatAbierto, setChatAbierto] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('chat'),
+  )
 
   const cargar = () => {
     setLoading(true)
@@ -91,6 +124,15 @@ export function MisPostulacionesPage() {
     }
   }
 
+  const activas = items.filter((p) => ESTADOS_ACTIVOS.includes(p.estado))
+  const visibles =
+    filtro === 'activas' ? activas : filtro === 'historial' ? items.filter((p) => !ESTADOS_ACTIVOS.includes(p.estado)) : items
+  const TABS: { id: Filtro; label: string; n: number }[] = [
+    { id: 'activas', label: 'Activas', n: activas.length },
+    { id: 'historial', label: 'Historial', n: items.length - activas.length },
+    { id: 'todas', label: 'Todas', n: items.length },
+  ]
+
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white">
@@ -99,6 +141,34 @@ export function MisPostulacionesPage() {
       <p className="mt-1 text-ink-500 dark:text-ink-400">
         Haz seguimiento al estado de tus solicitudes.
       </p>
+
+      {!loading && !error && items.length > 0 && (
+        <div className="mt-5 flex gap-1 rounded-xl bg-ink-100 p-1 dark:bg-ink-800/60">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setFiltro(t.id)}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
+                filtro === t.id
+                  ? 'bg-white text-ink-900 shadow-sm dark:bg-ink-900 dark:text-white'
+                  : 'text-ink-500 hover:text-ink-700 dark:text-ink-400',
+              )}
+            >
+              {t.label}
+              <span
+                className={cn(
+                  'rounded-full px-1.5 text-xs',
+                  filtro === t.id ? 'bg-solar-100 text-solar-700' : 'bg-ink-200/70 text-ink-500',
+                )}
+              >
+                {t.n}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {error && (
         <div className="mt-4">
@@ -124,61 +194,114 @@ export function MisPostulacionesPage() {
           </Link>
         </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {items.map((p) => {
+        <div className="mt-5 space-y-4">
+          {visibles.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-ink-300 py-12 text-center text-sm text-ink-500 dark:border-ink-700 dark:text-ink-400">
+              {filtro === 'activas'
+                ? 'No tienes postulaciones activas.'
+                : 'Todavía no tienes postulaciones en el historial.'}
+            </div>
+          )}
+          {visibles.map((p) => {
             const est = estadoPostulacionBadge(p.estado)
+            const c = p.convocatoria
+            const mod = c ? modalidadBadge(c.modalidad) : null
+            const hora = c ? formatTime(c.hora_inicio) : null
+            const puedeRetirar = ESTADOS_ACTIVOS.includes(p.estado)
+            const puedeChat = ESTADOS_CON_CHAT.includes(p.estado)
+            const certificado = p.estado === 'ASISTIO' && c?.otorga_certificado
             return (
-              <div
+              <article
                 key={p.id}
-                className="rounded-2xl border border-ink-200/60 bg-white/70 p-4 backdrop-blur dark:border-ink-700/60 dark:bg-ink-900/50"
+                className={cn(
+                  'relative overflow-hidden rounded-2xl border border-ink-200/60 bg-white/80 p-5 pl-6 shadow-sm backdrop-blur transition hover:shadow-md dark:border-ink-700/60 dark:bg-ink-900/50',
+                  'before:absolute before:inset-y-0 before:left-0 before:w-1.5',
+                  FRANJA[p.estado] ?? 'before:bg-ink-300',
+                )}
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <Badge tone={est.tone}>{est.label}</Badge>
-                  <span className="text-xs text-ink-400">{formatDate(p.fecha_postulacion)}</span>
+                  <span className="text-xs text-ink-400">
+                    Postulado el {formatDate(p.fecha_postulacion)}
+                  </span>
                 </div>
-                {p.convocatoria ? (
+
+                {c ? (
                   <Link
                     to={`/app/convocatorias/${p.publicacion_id}`}
-                    className="mt-1.5 block font-display text-lg font-bold text-ink-900 hover:text-solar-600 dark:text-white"
+                    className="mt-2 block font-display text-xl font-bold leading-snug text-ink-900 hover:text-solar-600 dark:text-white"
                   >
-                    {p.convocatoria.titulo}
+                    {c.titulo}
                   </Link>
                 ) : (
-                  <p className="mt-1.5 font-display text-lg font-bold text-ink-900 dark:text-white">
-                    Convocatoria
+                  <p className="mt-2 font-display text-xl font-bold text-ink-900 dark:text-white">
+                    Convocatoria no disponible
                   </p>
                 )}
+
+                {c && (
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-ink-500 dark:text-ink-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarDays className="size-4 text-solar-500" />
+                      {rangoFechas(c.fecha_inicio, c.fecha_fin)}
+                    </span>
+                    {hora && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock className="size-4 text-solar-500" />
+                        {hora}
+                      </span>
+                    )}
+                    {mod && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="size-4 text-solar-500" />
+                        {mod.label}
+                      </span>
+                    )}
+                    {c.otorga_certificado && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Award className="size-4 text-solar-500" />
+                        Certificado
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {p.motivo_rechazo && p.estado === 'RECHAZADO' && (
-                  <p className="mt-1 text-xs text-red-500">Motivo: {p.motivo_rechazo}</p>
+                  <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300">
+                    Motivo: {p.motivo_rechazo}
+                  </p>
                 )}
-                {p.estado === 'ASISTIO' && p.convocatoria?.otorga_certificado && (
-                  <DescargarCertificadoButton postulacionId={p.id} className="mt-2" />
+
+                {(puedeRetirar || puedeChat || certificado) && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-ink-100 pt-3 dark:border-ink-800">
+                    {puedeChat && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setChatAbierto(chatAbierto === p.id ? null : p.id)}
+                      >
+                        <MessageCircle className="size-4" /> Mensajes
+                      </Button>
+                    )}
+                    {certificado && <DescargarCertificadoButton postulacionId={p.id} />}
+                    {puedeRetirar && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        loading={accion === p.id}
+                        onClick={() => retirar(p.id, p.estado)}
+                        className="ml-auto text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                      >
+                        Retirar postulación
+                      </Button>
+                    )}
+                  </div>
                 )}
-                {['PENDIENTE', 'EN_REVISION', 'LISTA_ESPERA', 'ACEPTADO'].includes(p.estado) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    loading={accion === p.id}
-                    onClick={() => retirar(p.id, p.estado)}
-                    className="mt-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
-                  >
-                    Retirar postulación
-                  </Button>
-                )}
-                {ESTADOS_CON_CHAT.includes(p.estado) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setChatAbierto(chatAbierto === p.id ? null : p.id)}
-                    className="mt-2 ml-2"
-                  >
-                    <MessageCircle className="size-4" /> Mensajes
-                  </Button>
-                )}
+
                 {chatAbierto === p.id && (
                   <ChatPostulacion postulacionId={p.id} onClose={() => setChatAbierto(null)} />
                 )}
-              </div>
+              </article>
             )
           })}
         </div>

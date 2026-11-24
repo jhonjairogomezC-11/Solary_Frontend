@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Compass,
   Gift,
+  GraduationCap,
   Repeat,
   Sparkles,
   Store,
@@ -24,6 +25,8 @@ import {
   X,
 } from 'lucide-react'
 
+import { useTour } from '@/components/tour/tourContext'
+import { TARGET_TUTORIAL } from '@/components/tour/tourSteps'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/auth/AuthContext'
@@ -46,6 +49,7 @@ export function AppLayout() {
   const { pathname } = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const noLeidas = useNotificacionesEnVivo()
+  const { iniciar: iniciarTour } = useTour()
 
   const esFundacion = usuario?.rol === 'FUNDACION'
 
@@ -92,12 +96,13 @@ export function AppLayout() {
           <Logo />
         </Link>
       </div>
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3">
         {navItems.map(({ to, label, icon: Icon, end, also }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
+            data-tour={to}
             onClick={() => setMobileOpen(false)}
             className={({ isActive }) =>
               cn(
@@ -137,6 +142,17 @@ export function AppLayout() {
             <p className="truncate text-xs text-ink-400">{esFundacion ? 'Fundación' : 'Voluntario'}</p>
           </div>
         </div>
+        <button
+          type="button"
+          data-tour={TARGET_TUTORIAL}
+          onClick={() => {
+            setMobileOpen(false)
+            iniciarTour()
+          }}
+          className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink-600 transition hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800"
+        >
+          <GraduationCap className="size-5" /> Ver tutorial
+        </button>
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink-600 transition hover:bg-red-50 hover:text-red-600 dark:text-ink-300 dark:hover:bg-red-500/10"

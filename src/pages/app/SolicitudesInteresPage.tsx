@@ -20,6 +20,20 @@ export function SolicitudesInteresPage() {
   const [chat, setChat] = useState<{ id: string; msgs: MensajeInteres[] } | null>(null)
   const [texto, setTexto] = useState('')
 
+  // Si llegamos desde una notificación (?chat=<id>), abre ese chat.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('chat')
+    if (!id) return
+    let active = true
+    ofrecimientoService
+      .mensajes(id)
+      .then((msgs) => active && setChat({ id, msgs }))
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
   const recargar = useCallback(async () => {
     try {
       setItems(await ofrecimientoService.solicitudes())

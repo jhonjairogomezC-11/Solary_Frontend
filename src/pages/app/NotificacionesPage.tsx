@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell, CheckCheck, Loader2, Settings2 } from 'lucide-react'
 
+import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { parseApiError } from '@/lib/apiClient'
@@ -11,7 +13,52 @@ import { cn } from '@/lib/utils'
 import type { Notificacion } from '@/types/convocatoria'
 import type { PreferenciasNotificacion } from '@/types/voluntario'
 
+/** Destino al pulsar una notificación según su tipo y el objeto asociado. */
+function rutaDeNotificacion(n: Notificacion, rol: string | undefined): string | null {
+  const esFundacion = rol === 'FUNDACION'
+  const id = n.objeto_id
+  switch (n.objeto_tipo) {
+    case 'postulacion':
+      if (n.tipo === 'NUEVO_MENSAJE' && id) {
+        if (esFundacion) {
+          return n.publicacion_id
+            ? `/app/convocatorias/${n.publicacion_id}/postulaciones?chat=${id}`
+            : '/app/mis-convocatorias'
+        }
+        return `/app/mis-postulaciones?chat=${id}`
+      }
+      if (n.tipo === 'XP_OBTENIDO') return '/app/trayectoria'
+      return esFundacion ? '/app/mis-convocatorias' : '/app/mis-postulaciones'
+    case 'publicacion':
+      if (!id) return null
+      return n.tipo === 'ACTIVIDAD_MODIFICADA' || n.tipo === 'ACTIVIDAD_CANCELADA'
+        ? `/app/convocatorias/${id}`
+        : `/app/convocatorias/${id}/postulaciones`
+    case 'solicitud_interes':
+      return n.tipo === 'NUEVO_MENSAJE' && id
+        ? `/app/solicitudes-interes?chat=${id}`
+        : '/app/solicitudes-interes'
+    case 'ofrecimiento':
+      return '/app/ofrecimientos'
+    case 'ticket':
+      return id ? `/app/soporte?ticket=${id}` : '/app/soporte'
+    case 'fundacion':
+      if (esFundacion) return '/app/perfil-publico'
+      return id ? `/app/organizaciones/${id}` : null
+    case 'programacion':
+      return '/app/programaciones'
+    case 'logro':
+      return '/app/logros'
+    case 'voluntario':
+      return '/app/perfil'
+    default:
+      return null
+  }
+}
+
 export function NotificacionesPage() {
+  const { usuario } = useAuth()
+  const navigate = useNavigate()
   const [items, setItems] = useState<Notificacion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -55,6 +102,12 @@ export function NotificacionesPage() {
     }
   }
 
+  const abrir = (n: Notificacion) => {
+    if (!n.leida) void marcarUna(n.id)
+    const ruta = rutaDeNotificacion(n, usuario?.rol)
+    if (ruta) navigate(ruta)
+  }
+
   const hayNoLeidas = items.some((n) => !n.leida)
 
   return (
@@ -91,7 +144,7 @@ export function NotificacionesPage() {
           {items.map((n) => (
             <button
               key={n.id}
-              onClick={() => !n.leida && marcarUna(n.id)}
+              onClick={() => abrir(n)}
               className={cn(
                 'flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition',
                 n.leida

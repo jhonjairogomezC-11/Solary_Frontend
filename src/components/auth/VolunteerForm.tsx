@@ -9,8 +9,12 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { disponibilidadOptions, generoOptions, tipoDocumentoOptions } from '@/lib/catalogs'
 import { useMunicipios } from '@/hooks/useMunicipios'
+import { resumenErrores } from '@/lib/formErrors'
+import { ACEPTACIONES_REGISTRO } from '@/lib/legal'
+import { TextoAceptacion } from '@/components/legal/TextoAceptacion'
 import {
   EDAD_MINIMA,
+  componerNombre,
   fechaMaximaNacimiento,
   volunteerSchema,
   type VolunteerForm as VForm,
@@ -36,7 +40,7 @@ export function VolunteerForm({ onSuccess, serverError, setServerError }: Props)
   const onSubmit = async (values: VForm) => {
     setServerError(null)
     const payload: RegisterVolunteerPayload = {
-      nombre: values.nombre,
+      nombre: componerNombre(values),
       email: values.email,
       password: values.password,
       password_confirmation: values.password_confirmation,
@@ -48,6 +52,7 @@ export function VolunteerForm({ onSuccess, serverError, setServerError }: Props)
       municipio_id: values.municipio_id,
       disponibilidad: values.disponibilidad,
       experiencia: values.experiencia || undefined,
+      aceptaciones: ACEPTACIONES_REGISTRO,
     }
     try {
       const data = await authService.registerVolunteer(payload)
@@ -58,16 +63,49 @@ export function VolunteerForm({ onSuccess, serverError, setServerError }: Props)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      {serverError && <Alert tone="error">{serverError}</Alert>}
+    <form
+      onSubmit={handleSubmit(onSubmit, (errs) => {
+        setServerError(resumenErrores(errs))
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      })}
+      className="space-y-4"
+      noValidate
+    >
+      {serverError && (
+        <Alert tone="error" className="whitespace-pre-line">
+          {serverError}
+        </Alert>
+      )}
 
-      <Input
-        label="Nombre completo"
-        icon={<User className="size-4.5" />}
-        placeholder="Ana Pérez"
-        error={errors.nombre?.message}
-        {...register('nombre')}
-      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Input
+          label="Primer nombre"
+          icon={<User className="size-4.5" />}
+          placeholder="Ana"
+          autoComplete="given-name"
+          error={errors.primer_nombre?.message}
+          {...register('primer_nombre')}
+        />
+        <Input
+          label="Segundo nombre (opcional)"
+          placeholder="María"
+          error={errors.segundo_nombre?.message}
+          {...register('segundo_nombre')}
+        />
+        <Input
+          label="Primer apellido"
+          placeholder="Pérez"
+          autoComplete="family-name"
+          error={errors.primer_apellido?.message}
+          {...register('primer_apellido')}
+        />
+        <Input
+          label="Segundo apellido (opcional)"
+          placeholder="Gómez"
+          error={errors.segundo_apellido?.message}
+          {...register('segundo_apellido')}
+        />
+      </div>
       <Input
         label="Correo electrónico"
         type="email"
@@ -160,15 +198,7 @@ export function VolunteerForm({ onSuccess, serverError, setServerError }: Props)
       />
 
       <Checkbox
-        label={
-          <>
-            Acepto los{' '}
-            <a href="#" className="font-medium text-solar-600 hover:underline dark:text-solar-400">
-              términos y condiciones
-            </a>{' '}
-            y la política de tratamiento de datos.
-          </>
-        }
+        label={<TextoAceptacion />}
         error={errors.acepta_terminos?.message}
         {...register('acepta_terminos')}
       />
